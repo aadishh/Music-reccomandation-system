@@ -14,6 +14,11 @@ import time
 from datetime import datetime
 from config import EMOTION_PLAYLISTS, SPOTIFY_CONFIG, AUTO_CAPTURE_SETTINGS, CAPTURED_IMAGE_PATH
 
+# Suppress TensorFlow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
+
 def convert_to_json_serializable(obj):
     """Convert numpy types to JSON serializable Python types."""
     if hasattr(obj, 'item'):  # numpy scalar

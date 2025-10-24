@@ -1,12 +1,12 @@
 # Configuration file for emotion-based music recommendation
 import os
 
-# Spotify Configuration
+# Spotify Configuration - Use environment variables in production
 SPOTIFY_CONFIG = {
-    'username': 'aadish',
-    'client_id': '63b8d384874843a7a8fbdd09ca6aea5f',
-    'client_secret': '672a3ea80d364ac69cf3114252503ed1',
-    'redirect_uri': 'http://google.com/callback/'
+    'username': os.getenv('SPOTIFY_USERNAME', 'aadish'),
+    'client_id': os.getenv('SPOTIFY_CLIENT_ID', '63b8d384874843a7a8fbdd09ca6aea5f'),
+    'client_secret': os.getenv('SPOTIFY_CLIENT_SECRET', '672a3ea80d364ac69cf3114252503ed1'),
+    'redirect_uri': os.getenv('SPOTIFY_REDIRECT_URI', 'http://google.com/callback/')
 }
 
 # Emotion to Playlist Mapping with individual track URLs
@@ -49,7 +49,7 @@ AUTO_CAPTURE_SETTINGS = {
     'auto_play_random_song': True  # Automatically play random song from playlist
 }
 
-# File paths
+# File paths - Use temp directory for deployment
 HAAR_CASCADE_PATH = './haarcascade_frontalface_default.xml'
-CAPTURED_IMAGE_PATH = 'saved_img.jpg'
-PROCESSED_IMAGE_PATH = 'saved_img-final.jpg'
+CAPTURED_IMAGE_PATH = os.getenv('CAPTURED_IMAGE_PATH', '/tmp/saved_img.jpg')
+PROCESSED_IMAGE_PATH = os.getenv('PROCESSED_IMAGE_PATH', '/tmp/saved_img-final.jpg')

@@ -1,14 +1,13 @@
 # Core dependencies for DeepFace emotion detection
-opencv-python-headless==4.12.0.88
-deepface==0.0.95
-spotipy==2.25.1
+opencv-python-headless==4.8.1.78
+deepface==0.0.79
+spotipy==2.22.1
 
-# DeepFace dependencies
-tensorflow>=2.20.0
-tf-keras>=2.20.1
-numpy>=2.0.0,<3.0.0
-pandas>=2.3.0
-Pillow>=12.0.0
+# DeepFace dependencies - using stable versions
+tensorflow==2.13.0
+numpy==1.24.3
+pandas==2.0.3
+Pillow==10.0.1
 
 # Web framework
 flask==3.1.2
