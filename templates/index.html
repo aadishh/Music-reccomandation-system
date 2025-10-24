@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Emotion-Based Music Recommender</h1>
+            <p>Capture your emotion and get personalized music recommendations!</p>
+        </header>
+
+        <main>
+            <div class="camera-section">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                
+                <div class="controls">
+                    <button id="startCamera" class="btn btn-primary">Start Camera</button>
+                    <button id="captureBtn" class="btn btn-success" disabled>Capture Emotion</button>
+                    <button id="stopCamera" class="btn btn-secondary" disabled>Stop Camera</button>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing your emotion...</p>
+                </div>
+
+                <div id="results" class="results" style="display: none;">
+                    <h3>Your Emotion: <span id="emotionResult"></span></h3>
+                    <div class="emotion-scores" id="emotionScores"></div>
+                    <div class="playlist-recommendation">
+                        <h4>Recommended Playlist:</h4>
+                        <a id="playlistLink" href="#" target="_blank" class="btn btn-spotify">
+                            🎵 Open in Spotify
+                        </a>
+                    </div>
+                    <div class="stats">
+                        <p>Songs played since last check: <span id="songsCount">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <div class="setting-item">
+                    <label for="songsBeforeRecheck">Songs before emotion recheck:</label>
+                    <input type="number" id="songsBeforeRecheck" value="3" min="1" max="10">
+                    <button id="updateSettings" class="btn btn-small">Update</button>
+                </div>
+                <button id="resetCounter" class="btn btn-small btn-warning">Reset Song Counter</button>
+            </div>
+        </main>
+
+        <footer>
+            <p>Built with ❤️ using DeepFace and Spotify API</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
