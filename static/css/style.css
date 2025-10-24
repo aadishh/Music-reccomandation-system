@@ -109,6 +109,17 @@ main {
     color: #212529;
 }
 
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-song {
+    background: #1ed760;
+    color: white;
+    margin-left: 10px;
+}
+
 .btn-small {
     padding: 8px 16px;
     font-size: 0.9rem;
@@ -303,4 +314,51 @@ footer {
     .setting-item label {
         min-width: auto;
     }
+}
+.a
+uto-capture-status {
+    margin-top: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+}
+
+.auto-capture-status p {
+    margin: 5px 0;
+    font-weight: 500;
+}
+
+#songInfo {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #1db954;
+}
+
+#songInfo p {
+    margin: 5px 0;
+    color: #333;
+}
+
+#musicRecommendation {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.setting-item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.setting-item small {
+    display: block;
+    color: #666;
+    font-size: 0.85em;
+    margin-top: 5px;
 }

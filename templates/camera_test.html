@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+            background: #000;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 Camera Test Page</h1>
+    
+    <div class="info">
+        <h3>Browser Information:</h3>
+        <p><strong>User Agent:</strong> <span id="userAgent"></span></p>
+        <p><strong>HTTPS:</strong> <span id="httpsStatus"></span></p>
+        <p><strong>MediaDevices Support:</strong> <span id="mediaSupport"></span></p>
+    </div>
+
+    <video id="video" autoplay playsinline muted></video>
+    
+    <div>
+        <button id="startBtn">Start Camera</button>
+        <button id="stopBtn" disabled>Stop Camera</button>
+        <button id="testBtn">Test Permissions</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const testBtn = document.getElementById('testBtn');
+        const status = document.getElementById('status');
+        let stream = null;
+
+        // Display browser info
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        document.getElementById('httpsStatus').textContent = location.protocol === 'https:' ? 'Yes' : 'No';
+        document.getElementById('mediaSupport').textContent = 
+            (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'Yes' : 'No';
+
+        function showStatus(message, type = 'info') {
+            status.innerHTML = `<div class="${type}">${message}</div>`;
+            console.log(message);
+        }
+
+        async function startCamera() {
+            try {
+                showStatus('Requesting camera access...', 'info');
+                
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    showStatus('✅ Camera started successfully!', 'success');
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                };
+
+            } catch (error) {
+                console.error('Camera error:', error);
+                
+                let errorMsg = `❌ Camera Error: ${error.name} - ${error.message}`;
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMsg += '<br><br><strong>Solution:</strong> Grant camera permissions in your browser settings.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg += '<br><br><strong>Solution:</strong> Make sure a camera is connected to your device.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMsg += '<br><br><strong>Solution:</strong> Close other apps that might be using the camera.';
+                }
+                
+                showStatus(errorMsg, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+                
+                showStatus('Camera stopped', 'info');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        async function testPermissions() {
+            try {
+                showStatus('Testing camera permissions...', 'info');
+                
+                const permissions = await navigator.permissions.query({ name: 'camera' });
+                showStatus(`Camera permission status: ${permissions.state}`, 'info');
+                
+                if (permissions.state === 'denied') {
+                    showStatus('❌ Camera permission denied. Please enable in browser settings.', 'error');
+                } else if (permissions.state === 'granted') {
+                    showStatus('✅ Camera permission granted!', 'success');
+                } else {
+                    showStatus('⚠️ Camera permission prompt required.', 'info');
+                }
+                
+            } catch (error) {
+                showStatus(`Permission test failed: ${error.message}`, 'error');
+            }
+        }
+
+        startBtn.addEventListener('click', startCamera);
+        stopBtn.addEventListener('click', stopCamera);
+        testBtn.addEventListener('click', testPermissions);
+
+        // Initial permission test
+        testPermissions();
+    </script>
+</body>
+</html>

@@ -21,7 +21,13 @@
                 <div class="controls">
                     <button id="startCamera" class="btn btn-primary">Start Camera</button>
                     <button id="captureBtn" class="btn btn-success" disabled>Capture Emotion</button>
+                    <button id="autoCapture" class="btn btn-warning" disabled>Start Auto-Capture</button>
                     <button id="stopCamera" class="btn btn-secondary" disabled>Stop Camera</button>
+                </div>
+                
+                <div class="auto-capture-status" id="autoCaptureStatus" style="display: none;">
+                    <p>🤖 Auto-capture running - analyzing emotion every 30 seconds</p>
+                    <p>🎵 Music will automatically play based on detected emotions</p>
                 </div>
             </div>
 
@@ -35,10 +41,19 @@
                     <h3>Your Emotion: <span id="emotionResult"></span></h3>
                     <div class="emotion-scores" id="emotionScores"></div>
                     <div class="playlist-recommendation">
-                        <h4>Recommended Playlist:</h4>
-                        <a id="playlistLink" href="#" target="_blank" class="btn btn-spotify">
-                            🎵 Open in Spotify
-                        </a>
+                        <h4>Music Recommendation:</h4>
+                        <div id="musicRecommendation">
+                            <a id="playlistLink" href="#" target="_blank" class="btn btn-spotify">
+                                🎵 Open Playlist in Spotify
+                            </a>
+                            <a id="songLink" href="#" target="_blank" class="btn btn-song" style="display: none;">
+                                🎶 Play Random Song
+                            </a>
+                        </div>
+                        <div id="songInfo" style="display: none;">
+                            <p><strong>Now Playing:</strong> <span id="songName"></span></p>
+                            <p><strong>Artist:</strong> <span id="songArtist"></span></p>
+                        </div>
                     </div>
                     <div class="stats">
                         <p>Songs played since last check: <span id="songsCount">0</span></p>
@@ -52,6 +67,16 @@
                     <label for="songsBeforeRecheck">Songs before emotion recheck:</label>
                     <input type="number" id="songsBeforeRecheck" value="3" min="1" max="10">
                     <button id="updateSettings" class="btn btn-small">Update</button>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="autoPlaySongs" checked>
+                        Auto-play random songs from playlists
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label>Auto-capture interval: 30 seconds</label>
+                    <small>Automatically captures and analyzes emotion every 30 seconds</small>
                 </div>
                 <button id="resetCounter" class="btn btn-small btn-warning">Reset Song Counter</button>
             </div>

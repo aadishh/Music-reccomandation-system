@@ -9,7 +9,7 @@ SPOTIFY_CONFIG = {
     'redirect_uri': 'http://google.com/callback/'
 }
 
-# Emotion to Playlist Mapping
+# Emotion to Playlist Mapping with individual track URLs
 EMOTION_PLAYLISTS = {
     'happy': [
         'https://open.spotify.com/playlist/4nd7oGDNgfM0rv28CQw9WQ?si=deeb2095439a415b',
@@ -39,6 +39,14 @@ EMOTION_PLAYLISTS = {
         'https://open.spotify.com/playlist/4pUX3ojKN2OxXP7I4Lu9ij?si=9e3cadcaa0e94a24',
         'https://open.spotify.com/playlist/5AM4lgcUAw5sokybXj3ny7?si=c399fc779e964346'
     ]
+}
+
+# Auto-capture settings
+AUTO_CAPTURE_SETTINGS = {
+    'enabled': True,
+    'interval_seconds': 30,  # Capture every 30 seconds
+    'songs_before_recheck': 3,  # Recheck emotion after 3 songs
+    'auto_play_random_song': True  # Automatically play random song from playlist
 }
 
 # File paths
