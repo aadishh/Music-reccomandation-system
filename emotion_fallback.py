@@ -51,10 +51,17 @@ class FallbackEmotionDetector:
             total_weight = sum(emotion_weights.values())
             emotion_weights = {k: v/total_weight for k, v in emotion_weights.items()}
             
-            # Select emotion based on weights
-            emotions = list(emotion_weights.keys())
-            weights = list(emotion_weights.values())
-            dominant_emotion = np.random.choice(emotions, p=weights)
+            # Select emotion based on weights (without numpy.random.choice)
+            import random
+            rand_val = random.random()
+            cumulative = 0
+            dominant_emotion = 'neutral'  # default
+            
+            for emotion, weight in emotion_weights.items():
+                cumulative += weight
+                if rand_val <= cumulative:
+                    dominant_emotion = emotion
+                    break
             
             # Generate realistic confidence scores
             base_confidence = random.uniform(0.6, 0.9)

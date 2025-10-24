@@ -16,13 +16,24 @@ from config import EMOTION_PLAYLISTS, SPOTIFY_CONFIG, AUTO_CAPTURE_SETTINGS, CAP
 # Suppress TensorFlow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# Try to import DeepFace with fallback
+# Default to fallback mode - try DeepFace only if explicitly available
+DEEPFACE_AVAILABLE = False
+
+# Try to import DeepFace only if TensorFlow is available
 try:
     import tensorflow as tf
     tf.get_logger().setLevel('ERROR')
-    from deepface import DeepFace
-    DEEPFACE_AVAILABLE = True
-    print("✅ DeepFace loaded successfully")
+    
+    # Only try DeepFace if TensorFlow import succeeded
+    try:
+        from deepface import DeepFace
+        DEEPFACE_AVAILABLE = True
+        print("✅ DeepFace + TensorFlow loaded successfully")
+    except ImportError:
+        print("⚠️  DeepFace not available, using fallback")
+        
+except ImportError:
+    print("⚠️  TensorFlow not available, using fallback")
 except ImportError as e:
     print(f"⚠️  DeepFace not available: {e}")
     print("🔄 Using fallback emotion detection")
