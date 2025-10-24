@@ -1,0 +1,18 @@
+# Lightweight version for deployment - fallback if TensorFlow fails
+opencv-python-headless==4.10.0.84
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0
+Pillow>=10.0.0
+flask==3.1.2
+flask-cors==6.0.1
+gunicorn==23.0.0
+python-dotenv==1.1.1
+requests>=2.32.0
+spotipy==2.25.1
+
+# Try TensorFlow CPU-only version (smaller)
+tensorflow-cpu==2.20.0
+
+# If TensorFlow still fails, use this minimal emotion detection
+# scikit-learn>=1.3.0
+# joblib>=1.3.0

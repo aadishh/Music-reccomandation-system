@@ -3,7 +3,6 @@ from flask_cors import CORS
 import cv2
 import base64
 import numpy as np
-from deepface import DeepFace
 import random
 import logging
 import os
@@ -16,8 +15,19 @@ from config import EMOTION_PLAYLISTS, SPOTIFY_CONFIG, AUTO_CAPTURE_SETTINGS, CAP
 
 # Suppress TensorFlow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-tf.get_logger().setLevel('ERROR')
+
+# Try to import DeepFace with fallback
+try:
+    import tensorflow as tf
+    tf.get_logger().setLevel('ERROR')
+    from deepface import DeepFace
+    DEEPFACE_AVAILABLE = True
+    print("✅ DeepFace loaded successfully")
+except ImportError as e:
+    print(f"⚠️  DeepFace not available: {e}")
+    print("🔄 Using fallback emotion detection")
+    from emotion_fallback import FallbackEmotionDetector
+    DEEPFACE_AVAILABLE = False
 
 def convert_to_json_serializable(obj):
     """Convert numpy types to JSON serializable Python types."""
@@ -49,11 +59,16 @@ class DeepFaceEmotionSystem:
         self.auto_capture_thread = None
         self.is_running = False
         
+        # Initialize fallback detector if DeepFace not available
+        if not DEEPFACE_AVAILABLE:
+            self.fallback_detector = FallbackEmotionDetector()
+        
         # Initialize Spotify
         self.spotify_client = None
         self._initialize_spotify()
         
-        logger.info("DeepFace Emotion System initialized")
+        detector_type = "DeepFace" if DEEPFACE_AVAILABLE else "Fallback"
+        logger.info(f"Emotion System initialized with {detector_type} detector")
         
     def _initialize_spotify(self):
         """Initialize Spotify client for track information (optional)."""
@@ -66,7 +81,12 @@ class DeepFaceEmotionSystem:
             self.spotify_client = None
         
     def analyze_emotion_from_base64(self, image_data):
-        """Analyze emotion from base64 image data using DeepFace."""
+        """Analyze emotion from base64 image data using DeepFace or fallback."""
+        
+        # Use fallback detector if DeepFace not available
+        if not DEEPFACE_AVAILABLE:
+            return self.fallback_detector.analyze_emotion_from_base64(image_data)
+        
         try:
             # Decode base64 image
             image_data = image_data.split(',')[1]  # Remove data:image/jpeg;base64,
