@@ -1,0 +1,22 @@
+# Ignore unnecessary files for Docker build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+emotion_env/
+myenv/
+venv/
+.venv/
+.env
+.git/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.gitignore
+RUN.md
+README.md
+*.md

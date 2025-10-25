@@ -1,15 +1,21 @@
-# Simplified requirements - proven to work together
+# Core web framework
 flask==3.0.3
 flask-cors==4.0.1
 gunicorn==21.2.0
+
+# Image processing and utilities
 opencv-python-headless==4.8.1.78
 numpy==1.24.3
 pandas==2.0.3
 Pillow==10.0.1
+
+# Music integration
 spotipy==2.23.0
+
+# Utilities
 python-dotenv==1.0.1
 requests==2.31.0
 
-# Optional ML - only if deployment environment supports it
-# tensorflow==2.13.1
-# deepface==0.0.79
+# ML dependencies (Docker environment should handle these better)
+tensorflow==2.13.1
+deepface==0.0.79
