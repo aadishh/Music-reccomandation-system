@@ -1,55 +1,134 @@
-# Configuration file for emotion-based music recommendation
+"""Application configuration for the Emotion-Based Multi-Provider Music Recommender."""
+from __future__ import annotations
+
 import os
+import secrets
+from typing import Dict
 
-# Spotify Configuration - Use environment variables in production
-SPOTIFY_CONFIG = {
-    'username': os.getenv('SPOTIFY_USERNAME', 'aadish'),
-    'client_id': os.getenv('SPOTIFY_CLIENT_ID', '63b8d384874843a7a8fbdd09ca6aea5f'),
-    'client_secret': os.getenv('SPOTIFY_CLIENT_SECRET', '672a3ea80d364ac69cf3114252503ed1'),
-    'redirect_uri': os.getenv('SPOTIFY_REDIRECT_URI', 'http://google.com/callback/')
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+# Security & Session Settings
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+APP_API_KEY = os.getenv("APP_API_KEY", "").strip()
+SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", False)
+REQUIRE_AUTH_FOR_API = _env_bool("REQUIRE_AUTH_FOR_API", True)
+
+# Deployment & Licensing Policy
+# Supported values: "non_commercial" (default for local/demo) or "commercial" (strict commercial checks)
+APP_DEPLOYMENT_MODE = os.getenv("APP_DEPLOYMENT_MODE", "non_commercial").strip().lower()
+if APP_DEPLOYMENT_MODE not in {"non_commercial", "commercial"}:
+    APP_DEPLOYMENT_MODE = "non_commercial"
+
+# Provider Credentials (only configure providers you actually use; never expose to frontend)
+PROVIDER_CONFIG = {
+    "jamendo": {
+        "enabled": _env_bool("JAMENDO_ENABLED", True),
+        "client_id": os.getenv("JAMENDO_CLIENT_ID", "").strip(),
+        "base_url": os.getenv("JAMENDO_BASE_URL", "https://api.jamendo.com/v3.0").rstrip("/"),
+        # Must only be set True when you hold an active Jamendo Licensing / Pro commercial agreement
+        "commercial_agreement_verified": _env_bool("JAMENDO_COMMERCIAL_APPROVED", False),
+        "audio_format": os.getenv("JAMENDO_AUDIO_FORMAT", "mp32"),
+    },
+    "audius": {
+        "enabled": _env_bool("AUDIUS_ENABLED", True),
+        "api_key": os.getenv("AUDIUS_API_KEY", "").strip(),
+        "app_name": os.getenv("AUDIUS_APP_NAME", "EmotionMusicRecommender").strip() or "EmotionMusicRecommender",
+        "base_url": os.getenv("AUDIUS_BASE_URL", "https://api.audius.co/v1").rstrip("/"),
+        # Must only be set True when your commercial usage complies with Audius OML/creator terms
+        "oml_commercial_verified": _env_bool("AUDIUS_OML_COMMERCIAL_APPROVED", False),
+    },
+    "mubert": {
+        "enabled": _env_bool("MUBERT_ENABLED", True),
+        "company_id": os.getenv("MUBERT_COMPANY_ID", "").strip(),
+        "license_token": os.getenv("MUBERT_LICENSE_TOKEN", "").strip(),
+        "base_url": os.getenv("MUBERT_BASE_URL", "https://music-api.mubert.com/api/v3").rstrip("/"),
+        "stream_base_url": os.getenv("MUBERT_STREAM_BASE_URL", "https://stream.mubert.com/b2b/v3").rstrip("/"),
+        "default_stream_ttl_seconds": _env_int("MUBERT_STREAM_TTL_SECONDS", 900),
+    },
 }
 
-# Emotion to Playlist Mapping with individual track URLs
-EMOTION_PLAYLISTS = {
-    'happy': [
-        'https://open.spotify.com/playlist/4nd7oGDNgfM0rv28CQw9WQ?si=deeb2095439a415b',
-        'https://open.spotify.com/playlist/37i9dQZF1DWTwbZHrJRIgD?si=8fa87fafa3ec4b2f',
-        'https://open.spotify.com/playlist/1tTXdi6Bp04Pgmam9bSN7W?si=3e2e3747b4d84b5a',
-        'https://open.spotify.com/playlist/0jrlHA5UmxRxJjoykf7qRY?si=ba8fe9417a114d0f'
-    ],
-    'sad': [
-        'https://open.spotify.com/playlist/0VPrITrZqpMpIRGAs33Tmz?si=a914368c42b74810',
-        'https://open.spotify.com/playlist/4YOfhHpjPB0tq29NPpDY3F?si=9086ef13bf3c4690',
-        'https://open.spotify.com/playlist/1eRXF5lCwXzXArmtULo4Ji?si=41757810089d4e65',
-        'https://open.spotify.com/playlist/5qYMFV8EdILwgFbCwyG85Y?si=89691439b2664680'
-    ],
-    'angry': [
-        'https://open.spotify.com/playlist/7pS8tMgJgzQ8XSGpOajOqb?si=1898b4d8d6cb4da3',
-        'https://open.spotify.com/playlist/5rPNCmrHpkrfQvbyfFfEib?si=f0258de20d594874',
-        'https://open.spotify.com/playlist/0a4Hr64HWlxekayZ8wnWqx?si=74fac1a8928d4c12',
-        'https://open.spotify.com/playlist/0YMghmr5hSy2rrkL4BVuHP?si=b2fabd5160b14283'
-    ],
-    'neutral': [
-        'https://open.spotify.com/playlist/7EClwmhqu7mg4JvUI9z5DT?si=3816b85fcb3e4a0a',
-        'https://open.spotify.com/playlist/4PFwZ4h1LMAOwdwXqvSYHd?si=de1ebd18b436457b',
-        'https://open.spotify.com/playlist/3M1mbdfDqoDRbA46C3PRJi?si=1442a775925f4f24',
-        'https://open.spotify.com/playlist/4ftcK3C6QUeMUOMAQpOkDf?si=e6d6dfdcfaf841b3'
-    ],
-    'fear': [
-        'https://open.spotify.com/playlist/4pUX3ojKN2OxXP7I4Lu9ij?si=9e3cadcaa0e94a24',
-        'https://open.spotify.com/playlist/5AM4lgcUAw5sokybXj3ny7?si=c399fc779e964346'
-    ]
+# HTTP Reliability & Caching Settings
+HTTP_SETTINGS = {
+    "connect_timeout": _env_float("MUSIC_HTTP_CONNECT_TIMEOUT", 5.0),
+    "read_timeout": _env_float("MUSIC_HTTP_READ_TIMEOUT", 10.0),
+    "max_retries": _env_int("MUSIC_HTTP_MAX_RETRIES", 2),
+    "backoff_base_seconds": _env_float("MUSIC_HTTP_BACKOFF_SECONDS", 0.5),
+    "max_retry_after_seconds": _env_float("MUSIC_HTTP_MAX_RETRY_AFTER", 5.0),
 }
 
-# Auto-capture settings
+CACHE_SETTINGS = {
+    "metadata_ttl_seconds": _env_int("MUSIC_METADATA_CACHE_TTL", 300),
+    "health_ttl_seconds": _env_int("MUSIC_HEALTH_CACHE_TTL", 60),
+    "max_entries": _env_int("MUSIC_CACHE_MAX_ENTRIES", 1024),
+}
+
+# Configurable Recommendation Engine Weights
+DEFAULT_RECOMMENDATION_WEIGHTS: Dict[str, float] = {
+    "emotion_mood": _env_float("REC_WEIGHT_EMOTION_MOOD", 0.30),
+    "user_mood": _env_float("REC_WEIGHT_USER_MOOD", 0.15),
+    "genre": _env_float("REC_WEIGHT_GENRE", 0.15),
+    "artist": _env_float("REC_WEIGHT_ARTIST", 0.10),
+    "language": _env_float("REC_WEIGHT_LANGUAGE", 0.05),
+    "bpm": _env_float("REC_WEIGHT_BPM", 0.10),
+    "energy": _env_float("REC_WEIGHT_ENERGY", 0.10),
+    "history_affinity": _env_float("REC_WEIGHT_HISTORY_AFFINITY", 0.05),
+    "like_boost": _env_float("REC_WEIGHT_LIKE_BOOST", 0.20),
+    "dislike_penalty": _env_float("REC_WEIGHT_DISLIKE_PENALTY", 0.80),
+    "recent_play_penalty": _env_float("REC_WEIGHT_RECENT_PLAY_PENALTY", 0.25),
+}
+
+SUPPORTED_EMOTIONS = [
+    "happy",
+    "sad",
+    "angry",
+    "neutral",
+    "fear",
+    "surprise",
+    "disgust",
+]
+
+# Auto-capture settings (preserved for existing webcam UX)
 AUTO_CAPTURE_SETTINGS = {
-    'enabled': True,
-    'interval_seconds': 30,  # Capture every 30 seconds
-    'songs_before_recheck': 3,  # Recheck emotion after 3 songs
-    'auto_play_random_song': True  # Automatically play random song from playlist
+    "enabled": False,
+    "interval_seconds": _env_int("AUTO_CAPTURE_INTERVAL_SECONDS", 30),
+    "songs_before_recheck": _env_int("SONGS_BEFORE_RECHECK", 3),
+    "auto_play_random_song": True,
 }
 
-# File paths - Use temp directory for deployment
-HAAR_CASCADE_PATH = './haarcascade_frontalface_default.xml'
-CAPTURED_IMAGE_PATH = os.getenv('CAPTURED_IMAGE_PATH', '/tmp/saved_img.jpg')
-PROCESSED_IMAGE_PATH = os.getenv('PROCESSED_IMAGE_PATH', '/tmp/saved_img-final.jpg')
+# Storage & File Paths
+DATABASE_PATH = os.getenv("DATABASE_PATH", os.path.join("data", "music_recommender.db"))
+CAPTURED_IMAGE_PATH = os.getenv("CAPTURED_IMAGE_PATH", "/tmp/saved_img.jpg")
+PROCESSED_IMAGE_PATH = os.getenv("PROCESSED_IMAGE_PATH", "/tmp/saved_img-final.jpg")

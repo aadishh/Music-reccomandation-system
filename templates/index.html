@@ -3,87 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emotion Music Recommender</title>
+    <title>Emotion-Based Music Recommender</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎵 Emotion-Based Music Recommender</h1>
-            <p>Capture your emotion and get personalized music recommendations!</p>
+            <div class="header-content">
+                <h1>🎵 Emotion Music Recommender</h1>
+                <p>AI Facial Emotion Detection with Multi-Provider Music Streaming</p>
+                <div class="header-badges">
+                    <span class="badge badge-mode" id="deploymentModeBadge">Policy: {{ deployment_mode }}</span>
+                    <span class="badge badge-providers" id="activeProvidersBadge">Providers: Loading...</span>
+                </div>
+            </div>
         </header>
 
         <main>
-            <div class="camera-section">
-                <video id="video" autoplay playsinline></video>
-                <canvas id="canvas" style="display: none;"></canvas>
-                
-                <div class="controls">
-                    <button id="startCamera" class="btn btn-primary">Start Camera</button>
-                    <button id="captureBtn" class="btn btn-success" disabled>Capture Emotion</button>
-                    <button id="autoCapture" class="btn btn-warning" disabled>Start Auto-Capture</button>
-                    <button id="stopCamera" class="btn btn-secondary" disabled>Stop Camera</button>
-                </div>
-                
-                <div class="auto-capture-status" id="autoCaptureStatus" style="display: none;">
-                    <p>🤖 Auto-capture running - analyzing emotion every 30 seconds</p>
-                    <p>🎵 Music will automatically play based on detected emotions</p>
-                </div>
-            </div>
+            <!-- Left Column: Camera, Emotion Recognition & Recommendation Controls -->
+            <section class="camera-column">
+                <div class="card camera-card">
+                    <div class="card-header">
+                        <h2>📷 Facial Emotion Capture</h2>
+                    </div>
+                    <div class="video-container">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        <div id="cameraPlaceholder" class="camera-placeholder">
+                            <p>Camera is currently stopped.<br>Click <strong>Start Camera</strong> to begin.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button id="startCamera" class="btn btn-primary">Start Camera</button>
+                        <button id="captureBtn" class="btn btn-success" disabled>Capture Emotion</button>
+                        <button id="autoCapture" class="btn btn-warning" disabled>Start Auto-Capture</button>
+                        <button id="stopCamera" class="btn btn-secondary" disabled>Stop Camera</button>
+                    </div>
 
-            <div class="results-section">
-                <div id="loading" class="loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Analyzing your emotion...</p>
+                    <div class="auto-capture-status" id="autoCaptureStatus" style="display: none;">
+                        <p>🤖 <strong>Auto-capture active:</strong> Analyzing facial emotion periodically.</p>
+                        <p>🎶 Recommends and queues fresh tracks automatically.</p>
+                    </div>
+
+                    <div id="loading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p id="loadingMessage">Analyzing emotion with DeepFace...</p>
+                    </div>
                 </div>
 
-                <div id="results" class="results" style="display: none;">
-                    <h3>Your Emotion: <span id="emotionResult"></span></h3>
+                <div class="card emotion-results-card" id="emotionResultsCard" style="display: none;">
+                    <div class="card-header">
+                        <h2>🧠 Detected Emotion</h2>
+                        <span class="badge badge-emotion" id="emotionResult">—</span>
+                    </div>
+                    <p class="confidence-label">Confidence: <strong id="emotionConfidence">0%</strong></p>
                     <div class="emotion-scores" id="emotionScores"></div>
-                    <div class="playlist-recommendation">
-                        <h4>Music Recommendation:</h4>
-                        <div id="musicRecommendation">
-                            <a id="playlistLink" href="#" target="_blank" class="btn btn-spotify">
-                                🎵 Open Playlist in Spotify
-                            </a>
-                            <a id="songLink" href="#" target="_blank" class="btn btn-song" style="display: none;">
-                                🎶 Play Random Song
-                            </a>
-                        </div>
-                        <div id="songInfo" style="display: none;">
-                            <p><strong>Now Playing:</strong> <span id="songName"></span></p>
-                            <p><strong>Artist:</strong> <span id="songArtist"></span></p>
-                        </div>
-                    </div>
-                    <div class="stats">
-                        <p>Songs played since last check: <span id="songsCount">0</span></p>
-                    </div>
                 </div>
-            </div>
 
-            <div class="settings-section">
-                <h3>Settings</h3>
-                <div class="setting-item">
-                    <label for="songsBeforeRecheck">Songs before emotion recheck:</label>
-                    <input type="number" id="songsBeforeRecheck" value="3" min="1" max="10">
-                    <button id="updateSettings" class="btn btn-small">Update</button>
+                <div class="card recommendation-settings-card">
+                    <div class="card-header">
+                        <h2>🎯 Recommendation Preferences</h2>
+                    </div>
+                    <div class="form-group">
+                        <label for="recModeSelect">Recommendation Strategy:</label>
+                        <select id="recModeSelect" class="form-control">
+                            <option value="mood_matching" selected>Mood Matching (Echo & validate current emotion)</option>
+                            <option value="mood_shifting">Mood Shifting (Transition toward uplifting/calm state)</option>
+                        </select>
+                        <small class="help-text" id="modeDescription">Matches musical BPM, energy, and mood tags directly to your detected state.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userMoodOverride">Manual Mood Override (Optional):</label>
+                        <select id="userMoodOverride" class="form-control">
+                            <option value="">None (Use detected facial emotion)</option>
+                            <option value="calm">Calm / Peaceful</option>
+                            <option value="energetic">Energetic / Upbeat</option>
+                            <option value="focus">Focus / Lo-Fi Study</option>
+                            <option value="happy">Happy / Joyful</option>
+                            <option value="melancholic">Melancholic / Reflective</option>
+                            <option value="workout">Workout / Intense</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="genreFilter">Preferred Genre(s):</label>
+                        <input type="text" id="genreFilter" class="form-control" placeholder="e.g. pop, indie, electronic, rock, jazz">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="providerFilter">Music Providers:</label>
+                        <select id="providerFilter" class="form-control">
+                            <option value="">All Configured Providers</option>
+                            <option value="jamendo">Jamendo only</option>
+                            <option value="audius">Audius only</option>
+                            <option value="mubert">Mubert only</option>
+                        </select>
+                    </div>
+
+                    <button id="refreshRecsBtn" class="btn btn-primary btn-block">🔄 Refresh Recommendations</button>
                 </div>
-                <div class="setting-item">
-                    <label>
-                        <input type="checkbox" id="autoPlaySongs" checked>
-                        Auto-play random songs from playlists
-                    </label>
+            </section>
+
+            <!-- Right Column: Unified Audio Player, Queue & Tabs -->
+            <section class="player-column">
+                <!-- Unified Music Player -->
+                <div class="card player-card" id="unifiedPlayer">
+                    <div class="card-header">
+                        <h2>🎧 Now Playing</h2>
+                        <span class="badge badge-provider" id="currentProviderBadge">Idle</span>
+                    </div>
+
+                    <div class="player-main">
+                        <div class="track-artwork-wrapper">
+                            <img id="trackArtwork" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23888' font-size='32'%3E%E2%99%AC%3C/text%3E%3C/svg%3E" alt="Track Artwork" class="track-artwork">
+                        </div>
+                        <div class="track-details">
+                            <h3 id="currentTrackTitle">No track loaded</h3>
+                            <p class="track-artist" id="currentTrackArtist">Capture an emotion to begin</p>
+                            <p class="track-meta" id="currentTrackMeta">
+                                <span id="metaGenre"></span>
+                                <span id="metaBpm"></span>
+                                <span id="metaEnergy"></span>
+                            </p>
+                            <div class="track-licensing-banner" id="trackLicensingBanner">
+                                <span id="licenseBadge" class="badge badge-license">License: Standard</span>
+                                <span id="attributionText" class="attribution-text"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Scrubber & Timestamps -->
+                    <div class="scrubber-container">
+                        <span id="currentTime" class="time-label">0:00</span>
+                        <input type="range" id="progressBar" class="progress-bar" value="0" min="0" max="100" step="0.1">
+                        <span id="totalDuration" class="time-label">0:00</span>
+                    </div>
+
+                    <!-- Player Controls -->
+                    <div class="player-controls">
+                        <button id="shuffleBtn" class="btn-icon" title="Shuffle Queue" aria-label="Shuffle">🔀</button>
+                        <button id="prevBtn" class="btn-icon" title="Previous Track" aria-label="Previous">⏮</button>
+                        <button id="playPauseBtn" class="btn-icon btn-play-main" title="Play/Pause" aria-label="Play">▶</button>
+                        <button id="nextBtn" class="btn-icon" title="Next Track" aria-label="Next">⏭</button>
+                        <button id="repeatBtn" class="btn-icon" title="Repeat (Off)" aria-label="Repeat">🔁</button>
+                    </div>
+
+                    <!-- Volume, Feedback & Quick Actions -->
+                    <div class="player-secondary-controls">
+                        <div class="volume-container">
+                            <button id="muteBtn" class="btn-icon-small" title="Mute/Unmute">🔊</button>
+                            <input type="range" id="volumeBar" class="volume-bar" min="0" max="1" step="0.05" value="0.85">
+                        </div>
+                        <div class="feedback-actions">
+                            <button id="likeBtn" class="btn-icon-small" title="Like this track">👍</button>
+                            <button id="dislikeBtn" class="btn-icon-small" title="Dislike (skip and deprioritize)">👎</button>
+                            <button id="favBtn" class="btn-icon-small" title="Save to Favorites">❤️</button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden HTML5 Audio Element -->
+                    <audio id="audioElement" preload="none"></audio>
+
+                    <div id="playerAlert" class="player-alert" style="display: none;"></div>
                 </div>
-                <div class="setting-item">
-                    <label>Auto-capture interval: 30 seconds</label>
-                    <small>Automatically captures and analyzes emotion every 30 seconds</small>
+
+                <!-- Tabs: Queue / Search / Favorites / History -->
+                <div class="card tabs-card">
+                    <div class="tabs-nav">
+                        <button class="tab-btn active" data-tab="queueTab">🎶 Recommendations (<span id="queueCount">0</span>)</button>
+                        <button class="tab-btn" data-tab="searchTab">🔍 Search Catalog</button>
+                        <button class="tab-btn" data-tab="favoritesTab">❤️ Favorites (<span id="favCount">0</span>)</button>
+                        <button class="tab-btn" data-tab="historyTab">🕒 History (<span id="historyCount">0</span>)</button>
+                    </div>
+
+                    <div class="tab-content active" id="queueTab">
+                        <div class="tab-toolbar">
+                            <span class="text-muted" id="recProfileSummary">No emotion analyzed yet</span>
+                            <button id="clearQueueBtn" class="btn btn-small btn-secondary">Clear Queue</button>
+                        </div>
+                        <ul id="queueList" class="track-list">
+                            <li class="empty-list-message">Your queue is empty. Capture your emotion on the left to get personalized music!</li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content" id="searchTab">
+                        <div class="search-bar">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search tracks, artists, or genres across Jamendo and Audius...">
+                            <button id="searchBtn" class="btn btn-primary">Search</button>
+                        </div>
+                        <ul id="searchResultsList" class="track-list">
+                            <li class="empty-list-message">Enter a search query above to explore available tracks.</li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content" id="favoritesTab">
+                        <div class="tab-toolbar">
+                            <span class="text-muted">Tracks you've marked as favorite</span>
+                            <button id="refreshFavsBtn" class="btn btn-small btn-secondary">Refresh</button>
+                        </div>
+                        <ul id="favoritesList" class="track-list">
+                            <li class="empty-list-message">No favorite tracks yet. Click the ❤️ button on any track to save it here!</li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content" id="historyTab">
+                        <div class="tab-toolbar">
+                            <span class="text-muted">Recently played streams</span>
+                            <button id="refreshHistoryBtn" class="btn btn-small btn-secondary">Refresh</button>
+                        </div>
+                        <ul id="historyList" class="track-list">
+                            <li class="empty-list-message">No listening history yet. Play a song to see it recorded here.</li>
+                        </ul>
+                    </div>
                 </div>
-                <button id="resetCounter" class="btn btn-small btn-warning">Reset Song Counter</button>
-            </div>
+            </section>
+
+            <!-- Bottom: System Settings -->
+            <section class="settings-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>⚙️ System & Recheck Settings</h2>
+                    </div>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="songsBeforeRecheck">Songs before auto-recheck:</label>
+                            <input type="number" id="songsBeforeRecheck" value="3" min="1" max="10" class="form-control-inline">
+                        </div>
+                        <div class="setting-item">
+                            <label for="autoCaptureInterval">Auto-capture interval (seconds):</label>
+                            <input type="number" id="autoCaptureInterval" value="30" min="10" max="300" class="form-control-inline">
+                        </div>
+                        <div class="setting-item checkbox-item">
+                            <label>
+                                <input type="checkbox" id="autoPlayNext" checked>
+                                Automatically play next recommended track in queue
+                            </label>
+                        </div>
+                        <div class="setting-item action-buttons">
+                            <button id="updateSettings" class="btn btn-small btn-primary">Save Settings</button>
+                            <button id="resetCounter" class="btn btn-small btn-secondary">Reset Song Counter (<span id="songsCount">0</span>)</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <footer>
-            <p>Built with ❤️ using DeepFace and Spotify API</p>
+            <p>Emotion Music Recommender &bull; Multi-Provider Architecture (Jamendo &bull; Audius &bull; Mubert) &bull; DeepFace AI</p>
         </footer>
     </div>
 

@@ -14,3 +14,11 @@ services:
         value: 2
       - key: DEEPFACE_HOME
         value: /tmp/.deepface
+      - key: APP_DEPLOYMENT_MODE
+        value: non_commercial
+      - key: JAMENDO_ENABLED
+        value: "true"
+      - key: AUDIUS_ENABLED
+        value: "true"
+      - key: MUBERT_ENABLED
+        value: "false"

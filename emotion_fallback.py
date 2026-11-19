@@ -2,8 +2,12 @@
 Fallback emotion detection system that doesn't require TensorFlow/DeepFace
 Uses simple image analysis and random selection for demo purposes
 """
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+except ImportError:
+    cv2 = None
+    np = None
 import random
 import logging
 
@@ -23,18 +27,18 @@ class FallbackEmotionDetector:
         try:
             # For demo: analyze basic image properties and return weighted random emotion
             
-            # Decode image for basic analysis
+            # Decode image for basic analysis if OpenCV is available
             import base64
-            image_data = image_data.split(',')[1]
-            image_bytes = base64.b64decode(image_data)
-            nparr = np.frombuffer(image_bytes, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-            
-            if img is None:
-                raise Exception("Could not decode image")
-            
-            # Simple image analysis
-            brightness = np.mean(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+            encoded = image_data.split(',')[1] if ',' in image_data else image_data
+            image_bytes = base64.b64decode(encoded)
+            if cv2 is not None and np is not None:
+                nparr = np.frombuffer(image_bytes, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                if img is None:
+                    raise Exception("Could not decode image")
+                brightness = float(np.mean(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)))
+            else:
+                brightness = 115.0
             
             # Weight emotions based on simple heuristics
             emotion_weights = {

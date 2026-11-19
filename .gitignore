@@ -63,3 +63,6 @@ saved_img*.jpg
 *.log
 *.sql
 *.sqlite
+*.db
+data/
+.pytest_cache/
