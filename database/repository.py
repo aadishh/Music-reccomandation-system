@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sqlite3
 import threading
 from datetime import datetime, timezone
@@ -24,14 +25,30 @@ def _now_iso() -> str:
 class LocalFallbackRepository:
     """Thread-safe SQLite repository used in local testing and when Supabase credentials are unset."""
 
-    def __init__(self, db_path: str = "data/app_local.db") -> None:
+    def __init__(self, db_path: Optional[str] = None) -> None:
+        if db_path is None:
+            db_path = os.getenv("SQLITE_DB_PATH", "/tmp/music_recommender.db")
         self.db_path = db_path
         self._lock = threading.RLock()
         self._memory_conn: Optional[sqlite3.Connection] = None
-        if db_path == ":memory:":
+        if self.db_path == ":memory:":
             self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
             self._memory_conn.row_factory = sqlite3.Row
+        else:
+            self._ensure_parent_dir_and_writable()
         self._init_schema()
+
+    def _ensure_parent_dir_and_writable(self) -> None:
+        """Ensure parent directory exists and verify database path writability."""
+        parent = os.path.dirname(os.path.abspath(self.db_path))
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+            if not os.access(parent, os.W_OK):
+                raise PermissionError(
+                    f"Parent directory '{parent}' is not writable for SQLite fallback database '{self.db_path}'"
+                )
+        if os.path.exists(self.db_path) and not os.access(self.db_path, os.W_OK):
+            raise PermissionError(f"SQLite fallback database file '{self.db_path}' is not writable")
 
     def _connect(self) -> sqlite3.Connection:
         if self._memory_conn is not None:
@@ -743,9 +760,43 @@ class LocalFallbackRepository:
 class SupabaseRepository:
     """Production repository executing queries against Supabase PostgreSQL via SDK."""
 
-    def __init__(self, manager: Optional[SupabaseConnectionManager] = None) -> None:
+    def __init__(
+        self,
+        manager: Optional[SupabaseConnectionManager] = None,
+        fallback: Optional[LocalFallbackRepository] = None,
+    ) -> None:
         self.manager = manager or db_manager
-        self.fallback = LocalFallbackRepository()
+        self._fallback: Optional[LocalFallbackRepository] = fallback
+        self._fallback_lock = threading.RLock()
+
+    @property
+    def fallback(self) -> LocalFallbackRepository:
+        """Lazily initialize fallback repository only when needed."""
+        if self._fallback is None:
+            with self._fallback_lock:
+                if self._fallback is None:
+                    self._fallback = self._init_fallback()
+        return self._fallback
+
+    @fallback.setter
+    def fallback(self, value: Optional[LocalFallbackRepository]) -> None:
+        self._fallback = value
+
+    def _init_fallback(self) -> LocalFallbackRepository:
+        """Initialize the local SQLite fallback repository with graceful error handling."""
+        try:
+            return LocalFallbackRepository()
+        except Exception as exc:
+            logger.error("Failed to initialize SQLite fallback repository at configured path: %s", exc)
+            # If primary Supabase is configured and operational, attempt in-memory fallback
+            # so operations needing fallback can continue without crashing the worker
+            if self.manager.is_configured:
+                try:
+                    logger.warning("Attempting in-memory SQLite fallback repository as resilient safety net")
+                    return LocalFallbackRepository(db_path=":memory:")
+                except Exception as mem_exc:
+                    logger.error("In-memory SQLite fallback also failed: %s", mem_exc)
+            raise
 
     def _client(self, user_jwt: Optional[str] = None):
         client = self.manager.get_client(user_jwt)

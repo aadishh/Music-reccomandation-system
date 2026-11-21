@@ -131,12 +131,21 @@ def register_view():
             error_text = str(exc)
             if "already registered" in error_text.lower():
                 error_msg = "An account with this email already exists."
+                if request.is_json:
+                    return jsonify({"error": error_msg}), 400
+                flash(error_msg, "error")
+                return render_template("auth/register.html"), 400
+            elif any(
+                err in error_text.lower()
+                for err in ["nodename nor servname", "connection", "timeout", "network", "name resolution"]
+            ):
+                logger.warning("Supabase network unavailable during registration; falling back to local registration.")
             else:
                 error_msg = f"Registration error: {error_text}"
-            if request.is_json:
-                return jsonify({"error": error_msg}), 400
-            flash(error_msg, "error")
-            return render_template("auth/register.html"), 400
+                if request.is_json:
+                    return jsonify({"error": error_msg}), 400
+                flash(error_msg, "error")
+                return render_template("auth/register.html"), 400
 
     # Fallback local registration if Supabase is unconfigured
     if not user_id:
@@ -259,18 +268,25 @@ def login_view():
                         refresh_token = res.session.refresh_token
         except Exception as exc:
             logger.warning("Supabase login failed for %s: %s", email, exc)
-            repository.log_security_event(
-                user_id=None,
-                event_type="login_failure",
-                ip_address=request.remote_addr,
-                user_agent=request.user_agent.string if request.user_agent else None,
-                details={"email": email, "reason": str(exc)},
+            error_text = str(exc).lower()
+            is_connection_error = any(
+                err in error_text
+                for err in ["nodename nor servname", "connection", "timeout", "network", "name resolution"]
             )
-            error_msg = "Invalid email or password."
-            if request.is_json:
-                return jsonify({"error": error_msg}), 401
-            flash(error_msg, "error")
-            return render_template("auth/login.html", next_url=next_url), 401
+            if not is_connection_error:
+                repository.log_security_event(
+                    user_id=None,
+                    event_type="login_failure",
+                    ip_address=request.remote_addr,
+                    user_agent=request.user_agent.string if request.user_agent else None,
+                    details={"email": email, "reason": str(exc)},
+                )
+                error_msg = "Invalid email or password."
+                if request.is_json:
+                    return jsonify({"error": error_msg}), 401
+                flash(error_msg, "error")
+                return render_template("auth/login.html", next_url=next_url), 401
+            logger.warning("Supabase network unavailable during login; checking local fallback repository.")
 
     if not user_id:
         # Check local fallback repository

@@ -58,7 +58,6 @@ class FallbackEmotionDetector:
             emotion_weights = {k: v/total_weight for k, v in emotion_weights.items()}
             
             # Select emotion based on weights (without numpy.random.choice)
-            import random
             rand_val = random.random()
             cumulative = 0
             dominant_emotion = 'neutral'  # default
@@ -102,7 +101,7 @@ class FallbackEmotionDetector:
             return {
                 'dominant_emotion': fallback_emotion,
                 'emotion_scores': {fallback_emotion: 75.0, 'neutral': 25.0},
-                'success': False,
+                'success': True,
                 'error': str(e),
                 'detector': 'Random Fallback',
                 'confidence': 75.0

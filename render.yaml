@@ -32,6 +32,8 @@ services:
         value: "2026.1"
       - key: DEFAULT_JURISDICTION
         value: IN
+      - key: SQLITE_DB_PATH
+        value: /tmp/music_recommender.db
       # Secret / Custom Variables (Add in Render Dashboard)
       - key: FLASK_SECRET_KEY
         generateValue: true

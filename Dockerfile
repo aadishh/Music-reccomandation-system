@@ -34,6 +34,7 @@ ENV PYTHONUNBUFFERED=1
 ENV TF_CPP_MIN_LOG_LEVEL=2
 ENV DEEPFACE_HOME=/tmp/.deepface
 ENV PORT=8080
+ENV SQLITE_DB_PATH=/tmp/music_recommender.db
 
 # Create temporary directory
 RUN mkdir -p /tmp
@@ -42,7 +43,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # Start Flask application
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "300", "--workers", "1", "--max-requests", "100", "app:app"]
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-8080} --timeout 300 --workers 1 --max-requests 100 app:app"]

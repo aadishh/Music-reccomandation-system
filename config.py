@@ -141,6 +141,7 @@ AUTO_CAPTURE_SETTINGS = {
 }
 
 # Storage & File Paths
+SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/tmp/music_recommender.db")
 DATABASE_PATH = os.getenv("DATABASE_PATH", os.path.join("data", "music_recommender.db"))
 CAPTURED_IMAGE_PATH = os.getenv("CAPTURED_IMAGE_PATH", "/tmp/saved_img.jpg")
 PROCESSED_IMAGE_PATH = os.getenv("PROCESSED_IMAGE_PATH", "/tmp/saved_img-final.jpg")

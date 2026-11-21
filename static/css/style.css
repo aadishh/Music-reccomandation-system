@@ -1104,6 +1104,7 @@ footer {
 .auth-page,
 .dashboard-page {
     background: var(--bg-main);
+    background-color: black;
     color: var(--text-primary);
     min-height: 100vh;
 }
