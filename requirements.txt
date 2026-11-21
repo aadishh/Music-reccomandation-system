@@ -1,3 +1,4 @@
+
 # Core web framework
 flask==3.0.3
 flask-cors==4.0.1
@@ -9,18 +10,21 @@ numpy==1.24.3
 pandas==2.0.3
 Pillow==10.0.1
 
-# Database & Auth
-supabase>=2.30.0
-pyjwt>=2.8.0
+# Database & Authentication
+supabase==2.31.0
+PyJWT==2.8.0
 cryptography>=42.0.0
 
 # Utilities
 python-dotenv==1.0.1
-requests==2.31.0
+requests>=2.31.0,<3
 
 # Testing
 pytest==8.2.0
 
-# ML dependencies (Docker environment should handle these better)
-tensorflow==2.13.1
-deepface==0.0.79
+# ML dependencies intentionally excluded
+# TensorFlow and DeepFace are disabled for the Render free tier.
+# The application uses FallbackEmotionDetector.
+# tensorflow-cpu==2.13.1
+# keras==2.13.1
+# deepface==0.0.79

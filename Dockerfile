@@ -1,48 +1,44 @@
-# Use Python 3.11 slim image for smaller size
+
+# Python 3.11
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies for OpenCV and other packages
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     curl \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
-    libgtk-3-0 \
-    libavcodec-dev \
-    libavformat-dev \
-    libswscale-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Copy requirements first
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application
 COPY . .
 
-# Create temp directory for images
-RUN mkdir -p /tmp
-
-# Set environment variables
+# Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV TF_CPP_MIN_LOG_LEVEL=2
 ENV DEEPFACE_HOME=/tmp/.deepface
 ENV PORT=8080
 
-# Expose port
+# Create temporary directory
+RUN mkdir -p /tmp
+
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the application
+# Start Flask application
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--timeout", "300", "--workers", "1", "--max-requests", "100", "app:app"]
