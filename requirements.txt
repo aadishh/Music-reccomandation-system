@@ -1,18 +1,22 @@
 
-# Core web framework
+# Flask application
 flask==3.0.3
 flask-cors==4.0.1
 gunicorn==21.2.0
 
-# Image processing and utilities
+# Numerical processing
+numpy==1.26.4
+
+# Computer vision
 opencv-python-headless==4.8.1.78
-numpy==1.24.3
-pandas==2.0.3
 Pillow==10.0.1
 
-# Database & Authentication
+# Data processing
+pandas==2.0.3
+
+# Supabase and authentication
 supabase==2.31.0
-PyJWT==2.8.0
+PyJWT>=2.12.0,<3.0
 cryptography>=42.0.0
 
 # Utilities
@@ -22,9 +26,7 @@ requests>=2.31.0,<3
 # Testing
 pytest==8.2.0
 
-# ML dependencies intentionally excluded
-# TensorFlow and DeepFace are disabled for the Render free tier.
-# The application uses FallbackEmotionDetector.
+# Excluded from lightweight Render deployment
 # tensorflow-cpu==2.13.1
 # keras==2.13.1
 # deepface==0.0.79
