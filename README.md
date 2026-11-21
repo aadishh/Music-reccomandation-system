@@ -1,125 +1,95 @@
 # 🎵 DeepFace Emotion Multi-Provider Music Recommender
 
-An AI-driven music recommendation and authorized streaming platform built with **Python**, **Flask**, **DeepFace**, **OpenCV**, and a **Multi-Provider Music API Architecture** supporting **Jamendo**, **Audius**, and **Mubert**.
+An AI-driven music recommendation and authorized streaming platform built with **Python**, **Flask**, **DeepFace**, **OpenCV**, **Supabase PostgreSQL & Authentication**, and a **Multi-Provider Music API Architecture** supporting **Jamendo**, **Audius**, and **Mubert**.
 
-Completely independent of Spotify, this system detects facial emotions from a webcam, normalizes music metadata across multiple providers into a unified schema, enforces strict copyright and commercial licensing verification, and plays authorized audio streams directly inside a unified in-browser player.
+Completely independent of Spotify, this system detects facial emotions from a webcam, normalizes music metadata across multiple providers into a unified schema, enforces strict copyright and commercial licensing verification, manages user authentication with Supabase, adheres to global privacy laws (India DPDP Act 2023 & Rules 2025, California CCPA/CPRA, Illinois BIPA, GDPR), and plays authorized audio streams directly inside a unified in-browser player.
 
 ---
 
 ## 🌟 Key Features
 
-- **Facial Emotion Recognition**: Uses DeepFace (with automatic graceful fallback) to detect 7 primary emotions: `happy`, `sad`, `angry`, `neutral`, `fear`, `surprise`, and `disgust`.
-- **Multi-Provider Music Abstraction Layer**:
-  - **Jamendo API v3.0**: Catalog search, Creative Commons tag discovery, audio streaming (`mp32`), and Jamendo Pro licensing checks.
-  - **Audius REST API v1**: Decentralized catalog search, trending tracks, stream endpoint resolution with gating enforcement (`is_streamable`, `stream_conditions`), and Open Music License / Creative Commons tracking.
-  - **Mubert API v3**: Optional generative AI channels and time-limited stream links with B2B commercial license verification.
+### 1. Facial Emotion Recognition & In-Memory Privacy
+- **Strictly In-Memory Processing**: Webcam frames are streamed over HTTPS, decoded in server RAM, analyzed using DeepFace, and **immediately freed from memory**.
+- **Zero Disk Retention Guarantee**: No photographs, video recordings, or facial biometric templates are ever written to disk or persistent storage.
+- **Biometric Law Compliance**: Operates in full compliance with Illinois BIPA (740 ILCS 14/), Texas CUBI, and Washington HB 1493 (no facial vectors, landmarks, or face embeddings are constructed or stored).
+- **DeepFace AI**: Detects 7 primary emotions (`happy`, `sad`, `angry`, `neutral`, `fear`, `surprise`, `disgust`) with automatic fallback to lightweight heuristics if TensorFlow is unavailable.
+
+### 2. Multi-Provider Music Abstraction Layer
+- **Jamendo API v3.0**: Catalog search, Creative Commons tag discovery, audio streaming (`mp32`), and Jamendo Pro licensing checks.
+- **Audius REST API v1**: Decentralized catalog search, trending tracks, stream endpoint resolution with gating enforcement (`is_streamable`, `stream_conditions`), and Open Music License / Creative Commons tracking.
+- **Mubert API v3**: Optional generative AI channels and time-limited stream links with B2B commercial license verification.
 - **Unified Track Schema**: Standardized domain model normalizing track IDs, titles, artists, albums, genres, duration, BPM, energy, mood tags, artwork, authorized playback URLs, and licensing compliance metadata.
-- **Strict Licensing Validation Engine**:
-  - Supports `non_commercial` and `commercial` deployment policies.
-  - Enforces per-track permissions: blocks tracks carrying Non-Commercial licenses (`CC-NC`), unverified free-tier Jamendo streams, Audius `All Rights Reserved` or gated tracks in commercial mode.
-  - Generates required attribution strings for Creative Commons tracks.
-  - Never bypasses provider restrictions or caches/proxies audio payloads.
-- **Intelligent Emotion Recommendation Engine**:
-  - **Mode A (Mood Matching)**: Directly aligns musical energy, tempo, and mood tags with your detected emotional state.
-  - **Mode B (Mood Shifting)**: Applies iso-principle psychological transitions to gently guide negative or fatigued states toward calming or uplifting states.
-  - **Configurable Weighted Scoring**: Dynamically scores and ranks candidates using emotion confidence, user moods, genres, artists, language, BPM, energy, listening history, and likes/dislikes.
-- **Unified HTML5 Audio Player**:
-  - Play/pause, next/previous, scrubber seek, volume/mute, shuffle, repeat (`off` / `all` / `one`).
-  - Queue, favorites, search catalog, and listening history with quick play actions.
-  - Automatic expired-stream recovery: refreshes expiring tokens seamlessly without playback interruptions.
-- **Secure API & Session Management**:
-  - Signed Flask session identity and CSRF tokens for web clients.
-  - Optional `Authorization: Bearer <APP_API_KEY>` for external API consumers.
-  - Upstream provider credentials (`JAMENDO_CLIENT_ID`, `AUDIUS_API_KEY`, etc.) are kept strictly backend-side and never leaked to frontend code or API responses.
+
+### 3. Strict Copyright & Commercial Licensing Engine
+- Supports `non_commercial` and `commercial` deployment policies.
+- Enforces per-track permissions: blocks tracks carrying Non-Commercial licenses (`CC-NC`), unverified free-tier Jamendo streams, and Audius `All Rights Reserved` or gated tracks in commercial mode.
+- Generates required attribution strings for Creative Commons tracks.
+- Never bypasses provider restrictions or caches/proxies audio payloads.
+
+### 4. Supabase PostgreSQL Database & Authentication
+- **PostgreSQL Database**: Persistent storage for profiles, user preferences, consent records, emotion history, listening history, favorite tracks, policy versions, and security audit logs.
+- **Row Level Security (RLS)**: PostgreSQL RLS policies enforce that authenticated users can only view and mutate their own records.
+- **Supabase Authentication**:
+  - Email & password registration with email verification.
+  - Google OAuth login via Supabase GoTrue.
+  - Forgot password & password reset flows.
+  - Session management using secure HTTP-only cookies and Bearer tokens.
+  - Cascading account deletion (permanently removes user records and auth identity).
+- **Dual-Mode Repository Architecture**: Automatically uses Supabase PostgreSQL when credentials are configured, with automatic SQLite fallback for local development and offline unit testing.
+
+### 5. Privacy Compliance & Consent Management
+- **India DPDP Act, 2023 & DPDP Rules, 2025**:
+  - Itemized, unbundled, affirmative consent (Terms, Privacy, Camera Processing, Emotion History).
+  - Explicit camera consent required before webcam processing can begin.
+  - Opt-in emotion history: emotional states are only stored if the user affirmatively opts in.
+  - Full grievance redressal disclosures and response timelines.
+  - Section 9 child protection safeguards (no behavioral monitoring or targeted advertising of minors).
+- **US State Privacy Laws (CCPA/CPRA, VCDPA, CPA)**:
+  - Notice at collection and explicit confirmation that personal data is never sold or shared.
+  - Right to Access / Data Portability (1-click JSON data export).
+  - Right to Erasure / Deletion (clear emotion history, clear listening history, delete account).
+- **Immutable Consent Audit Ledger**: Consecutive consent actions (grants, modifications, withdrawals) append new records to an immutable ledger and never overwrite historical data.
+- **Privacy Dashboard (`/dashboard/privacy`)**: Real-time consent toggles, immutable audit trail, personal data JSON export, selective data clearing, and account deletion.
+- **User Dashboard (`/dashboard`)**: Profile management, music preferences, listening history, favorite tracks, and opt-in emotion timeline.
 
 ---
 
 ## 📐 System Architecture
 
 ```text
-[ Webcam / Client Browser ]
+[ Client Browser / Webcam ]
            │
            ▼
 [ Flask Application (app.py) ]
-  ├── Emotion Pipeline: DeepFace / FallbackEmotionDetector
-  ├── Blueprint: /api/music/* (Session & API Key Auth + CSRF)
+  ├── Auth Blueprint: /auth/* (Register, Login, Google OAuth, Reset, Delete)
+  ├── Privacy Blueprint: /privacy/* (Policy, Terms, Consent, Export, Erasure)
+  ├── Dashboard Blueprint: /dashboard/* (User Dashboard & Privacy Controls)
+  ├── Music API: /api/music/* (Search, Track, Playback, Recommendations, Favorites)
+  ├── In-Memory Emotion Pipeline: DeepFace (0-second disk retention; no face templates)
   └── Services:
-        ├── ProviderRegistry (Cross-Provider Fallback & Health)
+        ├── ProviderRegistry (Jamendo, Audius, Mubert)
         ├── LicensingValidator (Non-Commercial vs. Commercial Policy)
         ├── EmotionRecommendationEngine (Mood Matching & Mood Shifting)
-        ├── MetadataTTLCache (Safe Metadata Caching; No Audio Caching)
-        ├── MusicStorage (SQLite: History, Feedback, Favorites, Preferences)
-        └── BaseMusicProvider Abstraction Layer
-              ├── JamendoProvider   ──> Jamendo API v3.0
-              ├── AudiusProvider    ──> Audius REST API v1
-              └── MubertProvider    ──> Mubert API v3 (Optional B2B)
+        ├── SupabaseConnectionManager (Anon client with RLS + Admin client with Service Role)
+        └── SupabaseRepository / LocalFallbackRepository (Dual-mode PostgreSQL/SQLite)
 ```
 
 ---
 
-## 📋 Unified Track Schema
+## 🗄️ Database Schema & Migrations
 
-All tracks across all providers are normalized into the `UnifiedTrack` model:
+Database migrations are located in `database/migrations/`:
 
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `internal_id` | `str` | Normalized ID format `<provider>:<provider_track_id>` (e.g. `jamendo:1001`, `audius:D72kP`) |
-| `provider` | `str` | Provider identifier (`jamendo`, `audius`, `mubert`) |
-| `provider_track_id`| `str` | Upstream provider track or channel identifier |
-| `title` | `str` | Track title |
-| `artist` | `str` | Artist or creator name |
-| `album` | `str` (optional) | Album or collection name |
-| `genre` | `str` (optional) | Normalized musical genre |
-| `duration` | `int` (optional) | Duration in seconds |
-| `bpm` | `float` (optional) | Beats per minute (when available or estimated) |
-| `energy` | `float` (optional) | Normalized acoustic energy (`0.0` to `1.0`) |
-| `mood_tags` | `list[str]` | Normalized mood tags (e.g. `['happy', 'upbeat']`) |
-| `language` | `str` (optional) | ISO 2-letter language code |
-| `artwork` | `str` (optional) | Album/track cover art URL |
-| `preview_url` | `str` (optional) | Short audio preview stream URL |
-| `playback_url` | `str` (optional) | Approved, direct audio stream URL |
-| `playback_reference` | `str` (optional) | Canonical provider permalink or stream reference |
-| `playback_expires_at`| `str` (optional) | ISO-8601 UTC timestamp if the URL expires |
-| `is_available` | `bool` | Whether the track is currently playable |
-| `licensing` | `LicensingMetadata` | Detailed licensing, permitted playback, and verification record |
-| `provider_metadata` | `dict` | Provider-specific raw metadata kept strictly separate |
+| Migration File | Description |
+| :--- | :--- |
+| `001_initial_schema.sql` | Creates tables: `profiles`, `user_preferences`, `consent_records`, `emotion_history`, `listening_history`, `favorite_tracks`, `policy_versions`, `privacy_requests`, `security_audit_logs`, with primary keys, indexes, and foreign keys with `ON DELETE CASCADE`. |
+| `002_rls_policies.sql` | Enables Row Level Security (RLS) on all tables; configures policies checking `auth.uid() = user_id`; restricts `security_audit_logs` to service role. |
+| `003_seed_policies.sql` | Seeds initial legal policy versions (`privacy_policy`, `terms_and_conditions`, `camera_consent`). |
 
----
-
-## ⚖️ Licensing & Commercial Verification
-
-The licensing engine enforces copyright compliance before stream URLs are returned to clients:
-
-- **Non-Commercial Mode (`APP_DEPLOYMENT_MODE=non_commercial`)**:
-  - Permits personal and non-commercial streaming under standard Jamendo API free tier (Creative Commons licenses).
-  - Permits open, streamable Audius tracks with `is_streamable=True` and no access conditions.
-  - Blocks gated tracks (e.g., Audius tracks with `stream_conditions` requiring tokens/NFTs) and unstreamable tracks.
-- **Commercial Mode (`APP_DEPLOYMENT_MODE=commercial`)**:
-  - **Strictly blocks** tracks with Non-Commercial restrictions (`CC-NC`).
-  - **Strictly blocks** standard Jamendo free-tier tracks unless covered by verified Jamendo Licensing / Pro commercial agreements.
-  - **Strictly blocks** Audius tracks marked `All Rights Reserved` or unverified for commercial broadcasting.
-  - **Strictly blocks** Mubert generative streams unless an active B2B commercial license is verified.
-- **Attribution**: Automatically generates formatted attribution text for Creative Commons (CC BY, CC BY-SA, etc.) tracks displayed prominently in the web player.
-- **Redistribution Prohibited**: Standard streaming permissions never allow downloading, re-hosting, or proxying raw audio bytes.
-
----
-
-## 📡 REST API Reference
-
-All `/api/music/*` routes are authenticated via signed Flask session cookie (with `X-CSRF-Token` header for `POST` write requests) or programmatic `Authorization: Bearer <APP_API_KEY>`:
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/music/providers` | List provider capabilities, health, and current deployment policy (no secrets). |
-| `GET` | `/api/music/search` | Search normalized tracks across providers (`q`, `provider`, `genre`, `mood`, `limit`). |
-| `GET` | `/api/music/track/<track_id>` | Retrieve full metadata and licensing compliance for a specific track ID. |
-| `GET` | `/api/music/playback/<track_id>` | Resolve fresh authorized stream URL and record listening history. |
-| `GET` | `/api/music/recommendations` | Emotion/mood-aware ranked recommendations (`emotion`, `mode`, `genres`, `limit`). |
-| `POST`| `/api/music/feedback` | Record user feedback: `like`, `dislike`, `skip`, or `neutral`. |
-| `GET` | `/api/music/history` | Retrieve recent listening history for the current session. |
-| `GET` | `/api/music/favorites` | List favorite tracks for the current session. |
-| `POST`| `/api/music/favorites` | Add or remove a track from favorites (`is_favorite: true/false`). |
-| `GET` / `POST` | `/api/music/preferences` | Get or update user preferred genres, artists, language, and default mode. |
+### Running Migrations on Supabase:
+1. Log in to your [Supabase Dashboard](https://supabase.com).
+2. Navigate to **SQL Editor** in your project.
+3. Paste and execute `001_initial_schema.sql`, `002_rls_policies.sql`, and `003_seed_policies.sql` in sequence.
 
 ---
 
@@ -127,7 +97,8 @@ All `/api/music/*` routes are authenticated via signed Flask session cookie (wit
 
 ### 1. Prerequisites
 - Python 3.10+ (tested on Python 3.11, 3.12, 3.13)
-- Modern web browser with webcam access
+- Modern web browser with webcam support
+- (Optional) Free Supabase project for cloud PostgreSQL & Auth
 
 ### 2. Environment Setup
 ```bash
@@ -146,17 +117,25 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-### 3. Provider Configuration (`.env`)
-Configure credentials only for the providers you wish to activate:
+### 3. Configuration (`.env`)
+Configure credentials in your `.env` file:
 ```ini
+# Flask & App Security
+FLASK_SECRET_KEY=generate-a-secure-random-secret
+APP_BASE_URL=http://localhost:8080
+
+# Supabase PostgreSQL & Authentication (Optional for cloud, SQLite fallback used if blank)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
 # Jamendo API (https://developer.jamendo.com)
 JAMENDO_ENABLED=true
 JAMENDO_CLIENT_ID=your_jamendo_client_id
 
 # Audius API (https://docs.audius.co/api)
-# Note: Audius public read works out of the box; set API key for higher rate limits
 AUDIUS_ENABLED=true
-AUDIUS_API_KEY=your_optional_audius_api_key
+AUDIUS_API_KEY=
 
 # Mubert API (Optional generative audio B2B plan)
 MUBERT_ENABLED=false
@@ -178,19 +157,29 @@ docker run -p 8080:8080 --env-file .env emotion-music-app
 
 ---
 
-## 🧪 Running Automated Tests
+## 🧪 Automated Test Suite
 
-A comprehensive test suite of 41 unit and integration tests covers each provider, normalization, licensing, recommendations, streams, and API authentication:
+A comprehensive test suite of **55 unit and integration tests** validates:
+- Music provider integrations (Jamendo, Audius, Mubert).
+- Unified track normalization and licensing validation.
+- Mood matching & mood shifting recommendation algorithms.
+- Supabase PostgreSQL schema, CRUD, cascade deletions, and data export.
+- Immutable consent audit ledger recording and withdrawal.
+- Strictly in-memory camera frame processing (verifying 0 disk writes).
+- Mandatory camera consent gating for `/analyze` and `/auto-capture`.
+- User authentication, registration with unbundled consents, and protected routes.
 
 ```bash
-# Run with pytest
+# Run the entire test suite with pytest
 pytest tests/ -v
-
-# Or run with Python's built-in unittest
-python3 -m unittest discover -s tests -v
 ```
 
 ---
 
+## ⚖️ Legal Disclaimer
+This software implements technical architecture and controls designed to assist with compliance under the India Digital Personal Data Protection Act, 2023 & DPDP Rules, 2025, US State Privacy Laws (CCPA/CPRA), Illinois BIPA, and GDPR. However, software implementation alone does not constitute formal legal compliance. Organizations deploying this application commercially must conduct an independent legal review with qualified counsel.
+
+---
+
 ## 📄 License
-This application is distributed for non-commercial educational and demonstration purposes. All audio playback complies with upstream provider terms and individual artist Creative Commons / Open Music licenses.
+This application is distributed for educational and demonstration purposes. All audio streaming complies with upstream provider developer terms and individual artist licenses.

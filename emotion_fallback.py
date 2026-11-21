@@ -37,8 +37,10 @@ class FallbackEmotionDetector:
                 if img is None:
                     raise Exception("Could not decode image")
                 brightness = float(np.mean(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)))
+                del img, nparr
             else:
                 brightness = 115.0
+            del image_bytes
             
             # Weight emotions based on simple heuristics
             emotion_weights = {

@@ -10,13 +10,25 @@
 <body>
     <div class="container">
         <header>
-            <div class="header-content">
-                <h1>🎵 Emotion Music Recommender</h1>
-                <p>AI Facial Emotion Detection with Multi-Provider Music Streaming</p>
-                <div class="header-badges">
+            <div class="header-top-nav">
+                <div class="header-nav-left">
                     <span class="badge badge-mode" id="deploymentModeBadge">Policy: {{ deployment_mode }}</span>
                     <span class="badge badge-providers" id="activeProvidersBadge">Providers: Loading...</span>
                 </div>
+                <div class="header-nav-right">
+                    <a href="{{ url_for('dashboard.privacy_dashboard') }}" class="nav-pill nav-privacy">🔒 Privacy Controls</a>
+                    {% if user %}
+                        <a href="{{ url_for('dashboard.user_dashboard') }}" class="nav-pill nav-user">👤 {{ user.email.split('@')[0] }}</a>
+                        <a href="{{ url_for('auth.logout') }}" class="nav-pill nav-logout">Sign Out</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login_view') }}" class="nav-pill nav-login">Sign In</a>
+                        <a href="{{ url_for('auth.register_view') }}" class="nav-pill nav-register">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-content">
+                <h1>🎵 Emotion Music Recommender</h1>
+                <p>AI Facial Emotion Detection with Multi-Provider Music Streaming</p>
             </div>
         </header>
 
@@ -252,10 +264,48 @@
         </main>
 
         <footer>
-            <p>Emotion Music Recommender &bull; Multi-Provider Architecture (Jamendo &bull; Audius &bull; Mubert) &bull; DeepFace AI</p>
+            <div class="footer-links">
+                <a href="{{ url_for('privacy.privacy_policy') }}">Privacy Policy</a> &bull;
+                <a href="{{ url_for('privacy.terms_and_conditions') }}">Terms & Conditions</a> &bull;
+                <a href="{{ url_for('dashboard.privacy_dashboard') }}">Privacy Dashboard</a>
+            </div>
+            <p>Emotion Music Recommender &bull; Multi-Provider Architecture (Jamendo &bull; Audius &bull; Mubert) &bull; DeepFace AI &bull; Supabase PostgreSQL</p>
         </footer>
     </div>
 
+    <!-- In-App Camera Consent Modal -->
+    <div id="cameraConsentModal" class="modal-overlay" style="display: none;">
+        <div class="modal-dialog consent-modal-dialog">
+            <div class="consent-modal-badge">Affirmative Consent Required</div>
+            <h3>📷 Camera & Emotion Processing Notice</h3>
+            <p class="modal-subtitle">Policy v{{ policy_version }} &bull; In-Memory Server Processing</p>
+            <div class="consent-modal-body">
+                <p>Before turning on your camera, please confirm your consent:</p>
+                <ul class="consent-modal-list">
+                    <li>⚡ <strong>Strictly In-Memory:</strong> Frames are streamed via HTTPS, decoded in RAM, analyzed for emotion, and immediately discarded. <strong>No photos or videos are ever saved to disk.</strong></li>
+                    <li>🛡️ <strong>No Biometrics:</strong> We do not create facial recognition templates, face embeddings, or identity profiles.</li>
+                    <li>🔄 <strong>Withdrawable Anytime:</strong> You can revoke consent instantly from the <a href="{{ url_for('dashboard.privacy_dashboard') }}" target="_blank">Privacy Dashboard</a>.</li>
+                </ul>
+                <div class="modal-optin-item">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="modalOptinEmotionHistory">
+                        <span>Optional: Save detected emotion results to my private timeline</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="confirmCameraConsentBtn" class="btn btn-success">I Consent &bull; Start Camera</button>
+                <button type="button" id="cancelCameraConsentBtn" class="btn btn-secondary">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.APP_CONFIG = {
+            hasCameraConsent: {{ 'true' if has_camera_consent else 'false' }},
+            cameraConsentVersion: "{{ policy_version }}"
+        };
+    </script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

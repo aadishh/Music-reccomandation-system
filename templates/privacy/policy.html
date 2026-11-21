@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="legal-page">
+    <div class="container legal-container">
+        <header class="legal-header">
+            <div class="legal-header-nav">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-small">← Back to App</a>
+                <a href="{{ url_for('dashboard.privacy_dashboard') }}" class="btn btn-primary btn-small">Privacy Dashboard</a>
+            </div>
+            <h1>🔒 Privacy Policy</h1>
+            <p class="text-muted">Effective Date: January 1, 2026 &bull; Version: {{ policy_version }}</p>
+        </header>
+
+        <main class="legal-content">
+            <div class="alert-box alert-info">
+                <strong>Executive Privacy Summary:</strong>
+                Your privacy is paramount. Webcam frames are processed <strong>purely in-memory on our server</strong> and are <strong>immediately discarded</strong> after facial emotion inference. We <strong>never save webcam photos, video recordings, or facial biometric templates</strong> to disk or persistent storage.
+            </div>
+
+            <section class="legal-section">
+                <h2>1. Introduction & Scope</h2>
+                <p>This Privacy Policy explains how <strong>Emotion Music Recommender</strong> ("we", "our", or "the Application") collects, uses, processes, and protects your information when you access or use our web application, facial emotion detection services, and music recommendation features.</p>
+                <p>This policy is designed to comply with applicable data protection legislation worldwide, including:</p>
+                <ul>
+                    <li><strong>India:</strong> Digital Personal Data Protection Act, 2023 (DPDP Act) and the Digital Personal Data Protection Rules, 2025.</li>
+                    <li><strong>United States:</strong> California Consumer Privacy Act as amended by the California Privacy Rights Act (CCPA/CPRA), Virginia Consumer Data Protection Act (VCDPA), Colorado Privacy Act (CPA), and biometric regulations including Illinois Biometric Information Privacy Act (BIPA 740 ILCS 14/) and Texas Capture or Use of Biometric Identifier Act (CUBI).</li>
+                    <li><strong>European Union / UK:</strong> General Data Protection Regulation (GDPR / UK GDPR).</li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>2. Information We Collect</h2>
+                <h3>A. Webcam Video & Facial Frames (In-Memory Only)</h3>
+                <p>When you explicitly grant camera permission and provide affirmative consent for facial emotion capture, the application captures video frames from your webcam.</p>
+                <div class="alert-box alert-success">
+                    <strong>Zero-Disk Retention Architecture:</strong>
+                    Webcam frames are streamed over secure HTTPS, decoded temporarily in server memory, evaluated for emotion classification, and immediately deleted from memory. <strong>No raw photographs, videos, facial landmarks, or biometric face vectors are ever stored on disk or persistent databases.</strong>
+                </div>
+
+                <h3>B. Emotion Detection Inferences (Opt-In Persistent Storage)</h3>
+                <p>The detected emotion label (e.g., "happy", "calm", "sad") and confidence score are used in real-time to retrieve matched or mood-shifting music. <strong>Emotion history is only saved to your persistent profile if you explicitly check the opt-in box.</strong> If you do not opt in, emotion inferences are discarded as soon as the recommendation response is returned.</p>
+
+                <h3>C. Account & Profile Information</h3>
+                <p>When registering an account, we collect:</p>
+                <ul>
+                    <li>Email address (used for authentication via Supabase Auth).</li>
+                    <li>Full name or display pseudonym (optional).</li>
+                    <li>Country / Jurisdiction (to apply local privacy laws and language defaults).</li>
+                    <li>Profile avatar URL (optional).</li>
+                </ul>
+                <p><strong>Password Security:</strong> We never receive, process, or store plain-text passwords. All authentication credentials are handled by Supabase Auth with industry-standard bcrypt/Argon2 hashing.</p>
+
+                <h3>D. Music Preferences & Interaction Data</h3>
+                <ul>
+                    <li>Preferred music providers (Jamendo, Audius, Mubert).</li>
+                    <li>Preferred genres, artists, language, and recommendation modes.</li>
+                    <li>Listening history and favorite tracks marked by you.</li>
+                </ul>
+
+                <h3>E. Technical Audit & Consent Records</h3>
+                <p>To satisfy statutory compliance obligations (DPDP Act s. 6, GDPR Art. 7), we maintain an immutable audit trail of your consent grants, modifications, and withdrawals, including timestamp, policy version, consent method, and IP address at the moment of consent.</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>3. How Facial Emotion Detection Works</h2>
+                <p>Our application uses deep neural networks (DeepFace) with a lightweight computer vision pipeline. The model predicts the statistical probability of seven standard emotion classes (happiness, sadness, anger, fear, surprise, disgust, neutrality). The system does not attempt to uniquely identify you, link your face to external databases, or perform biometric identification.</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>4. Third-Party Music Providers</h2>
+                <p>To stream authorized tracks, our backend communicates with approved music APIs:</p>
+                <ul>
+                    <li><strong>Jamendo API:</strong> For Creative Commons and independent music streams.</li>
+                    <li><strong>Audius Protocol:</strong> For decentralized creator-uploaded tracks.</li>
+                    <li><strong>Mubert API (Optional):</strong> For real-time algorithmic audio generation.</li>
+                </ul>
+                <p><strong>Data Isolation:</strong> We never share webcam images, facial data, or personal account identifiers with music providers. Music API queries only contain generic search terms, genres, or track identifiers.</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>5. Data Retention & Erasure</h2>
+                <ul>
+                    <li><strong>Webcam Frames:</strong> 0 seconds retention (in-memory only).</li>
+                    <li><strong>Emotion History:</strong> Stored only while opt-in consent is active. You can clear your emotion history at any time with a single click.</li>
+                    <li><strong>Account Data:</strong> Retained until you delete your account. Account deletion initiates a permanent cascading delete of your profile, preferences, listening history, favorites, and authentication record.</li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>6. Your Legal Rights</h2>
+                <h3>A. India (DPDP Act, 2023 & Rules 2025)</h3>
+                <p>As a Data Principal in India, you enjoy:</p>
+                <ul>
+                    <li><strong>Right to Access:</strong> Download your entire personal data file via the Privacy Dashboard.</li>
+                    <li><strong>Right to Correction & Erasure:</strong> Edit profile details or permanently erase interaction records.</li>
+                    <li><strong>Right to Withdraw Consent:</strong> Toggle off camera processing or emotion history at any time without negative consequence.</li>
+                    <li><strong>Grievance Redressal:</strong> Contact our designated Grievance Officer listed below with response within statutory timelines.</li>
+                </ul>
+
+                <h3>B. United States (California CCPA/CPRA, CPA, VCDPA)</h3>
+                <ul>
+                    <li><strong>Right to Know & Access:</strong> Access categories and specific pieces of personal data collected.</li>
+                    <li><strong>Right to Delete:</strong> Request deletion of your personal data.</li>
+                    <li><strong>No Sale or Sharing:</strong> We do NOT sell your personal data or share it for cross-context behavioral advertising.</li>
+                    <li><strong>Non-Discrimination:</strong> You will never be denied service or charged different prices for exercising your privacy rights.</li>
+                </ul>
+
+                <h3>C. Biometric Information Disclosures (BIPA & CUBI)</h3>
+                <p>Because webcam processing is strictly ephemeral and in-memory, we do not store or capture "biometric identifiers" or "biometric information" as defined under Illinois BIPA (740 ILCS 14/10) or Texas CUBI (Tex. Bus. & Com. Code § 503.001).</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>7. Children's Privacy (COPPA & DPDP Child Protection)</h2>
+                <p>This service is not directed to individuals under the age of 13 in the United States, or under 18 in India without verifiable parental consent. In compliance with Section 9 of the DPDP Act, we do not undertake tracking, behavioral monitoring, or targeted advertising directed at children.</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>8. Data Security & Storage Architecture</h2>
+                <p>All client-server communications are encrypted in transit via TLS 1.3. User data in PostgreSQL is protected by Row Level Security (RLS) policies ensuring users can only read and modify their own records. Sensitive backend service credentials are strictly isolated from client-side code.</p>
+            </section>
+
+            <section class="legal-section">
+                <h2>9. Grievance Redressal & Contact Information</h2>
+                <p>If you have any questions, concerns, or requests regarding your personal data or this Privacy Policy, please contact our Data Protection & Grievance Redressal team:</p>
+                <div class="contact-card">
+                    <p><strong>Data Protection / Grievance Officer:</strong> Privacy Compliance Office</p>
+                    <p><strong>Application:</strong> DeepFace Emotion Music Recommender</p>
+                    <p><strong>Email:</strong> privacy@emotionmusicrecommender.local</p>
+                    <p><strong>Grievance Resolution Timelines:</strong> Inquiries are acknowledged within 24 hours and addressed within 15 days in accordance with DPDP Rules.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="legal-footer">
+            <p>&copy; 2026 Emotion Music Recommender &bull; <a href="{{ url_for('privacy.terms_and_conditions') }}">Terms & Conditions</a> &bull; <a href="{{ url_for('dashboard.privacy_dashboard') }}">Privacy Dashboard</a></p>
+        </footer>
+    </div>
+</body>
+</html>

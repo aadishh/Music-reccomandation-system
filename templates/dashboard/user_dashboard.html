@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-page">
+    <div class="container dashboard-container">
+        <!-- Top Navigation -->
+        <header class="dashboard-header">
+            <div class="header-brand">
+                <a href="{{ url_for('index') }}" class="brand-link">🎵 Emotion Music Recommender</a>
+                <span class="badge badge-profile">User Dashboard</span>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-small">🎧 Open Player</a>
+                <a href="{{ url_for('dashboard.privacy_dashboard') }}" class="btn btn-secondary btn-small">🔒 Privacy Controls</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-small">Sign Out</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-banner flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Column: Profile & Music Preferences -->
+            <div class="dashboard-col-left">
+                <!-- Profile Card -->
+                <div class="card profile-card">
+                    <div class="card-header">
+                        <h2>👤 Profile Details</h2>
+                    </div>
+                    <form id="profileForm" class="dashboard-form">
+                        <div class="form-group">
+                            <label for="profileEmail">Email Address</label>
+                            <input type="email" id="profileEmail" value="{{ profile.email or user.email }}" disabled class="form-control disabled-input">
+                            <small class="text-muted">Managed via Supabase Auth</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileFullName">Full Name</label>
+                            <input type="text" id="profileFullName" name="full_name" value="{{ profile.full_name or '' }}" class="form-control" placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="profileCountry">Jurisdiction / Country</label>
+                            <select id="profileCountry" name="country" class="form-control">
+                                <option value="IN" {% if profile.country == 'IN' %}selected{% endif %}>India (DPDP Act, 2023)</option>
+                                <option value="US" {% if profile.country == 'US' %}selected{% endif %}>United States (CCPA/CPRA)</option>
+                                <option value="EU" {% if profile.country == 'EU' %}selected{% endif %}>European Union (GDPR)</option>
+                                <option value="GB" {% if profile.country == 'GB' %}selected{% endif %}>United Kingdom</option>
+                                <option value="CA" {% if profile.country == 'CA' %}selected{% endif %}>Canada</option>
+                                <option value="AU" {% if profile.country == 'AU' %}selected{% endif %}>Australia</option>
+                                <option value="OTHER" {% if profile.country == 'OTHER' %}selected{% endif %}>Other Region</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-small">Save Profile</button>
+                        <span id="profileStatusMsg" class="status-msg"></span>
+                    </form>
+                </div>
+
+                <!-- Music Settings Card -->
+                <div class="card preferences-card">
+                    <div class="card-header">
+                        <h2>⚙️ Music Preferences</h2>
+                    </div>
+                    <form id="preferencesForm" class="dashboard-form">
+                        <div class="form-group">
+                            <label for="preferredProvider">Default Music Provider</label>
+                            <select id="preferredProvider" name="preferred_music_provider" class="form-control">
+                                <option value="jamendo" {% if preferences.preferred_music_provider == 'jamendo' %}selected{% endif %}>Jamendo (Independent & Creative Commons)</option>
+                                <option value="audius" {% if preferences.preferred_music_provider == 'audius' %}selected{% endif %}>Audius (Decentralized Creator Music)</option>
+                                <option value="mubert" {% if preferences.preferred_music_provider == 'mubert' %}selected{% endif %}>Mubert (Generative AI Music)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="preferredLanguage">Preferred Language</label>
+                            <input type="text" id="preferredLanguage" name="preferred_language" value="{{ preferences.preferred_language or '' }}" placeholder="en, es, hi..." class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="prefAutoplay" name="autoplay_enabled" {% if preferences.autoplay_enabled %}checked{% endif %}>
+                                <span>Automatically play next recommended track in queue</span>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-small">Update Preferences</button>
+                        <span id="prefStatusMsg" class="status-msg"></span>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Emotion Timeline, Favorites, & Listening History -->
+            <div class="dashboard-col-right">
+                <!-- Emotion Timeline Section -->
+                <div class="card timeline-card">
+                    <div class="card-header">
+                        <h2>🧠 Emotion History & Timeline</h2>
+                        {% if emotion_opted_in %}
+                            <span class="badge badge-success">Opted In</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Opted Out (Zero Retention)</span>
+                        {% endif %}
+                    </div>
+
+                    {% if emotion_opted_in %}
+                        {% if emotion_history %}
+                            <div class="emotion-history-list">
+                                {% for item in emotion_history %}
+                                    <div class="emotion-history-item">
+                                        <div class="emotion-pill emotion-{{ item.detected_emotion }}">
+                                            {{ item.detected_emotion|capitalize }}
+                                        </div>
+                                        <div class="emotion-meta">
+                                            <span class="confidence">Confidence: {{ (item.confidence_score)|round(1) }}%</span>
+                                            <span class="timestamp text-muted">{{ item.detected_at[:19].replace('T', ' ') }} UTC</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="empty-state">No emotion history recorded yet. Start camera detection in the player to log events.</p>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert-box alert-info">
+                            <strong>Privacy Notice:</strong> Emotion history recording is currently turned off. Your facial emotion detection runs purely in-memory and is discarded after each recommendation.
+                            <br><br>
+                            To build a personal mood timeline, you can enable <em>Emotion History</em> in the <a href="{{ url_for('dashboard.privacy_dashboard') }}">Privacy Dashboard</a>.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Favorite Tracks Section -->
+                <div class="card favorites-dashboard-card">
+                    <div class="card-header">
+                        <h2>❤️ Favorite Tracks ({{ favorites|length }})</h2>
+                    </div>
+                    {% if favorites %}
+                        <div class="favorites-table-wrapper">
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Track</th>
+                                        <th>Artist</th>
+                                        <th>Provider</th>
+                                        <th>Saved</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fav in favorites %}
+                                        <tr>
+                                            <td class="track-title-cell"><strong>{{ fav.track_title }}</strong></td>
+                                            <td>{{ fav.artist_name }}</td>
+                                            <td><span class="provider-tag provider-{{ fav.provider }}">{{ fav.provider }}</span></td>
+                                            <td class="text-muted small">{{ fav.created_at[:10] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">No favorite tracks yet. Mark tracks as favorite while listening in the player!</p>
+                    {% endif %}
+                </div>
+
+                <!-- Listening History Section -->
+                <div class="card listening-dashboard-card">
+                    <div class="card-header">
+                        <h2>🎧 Recent Listening History ({{ listening_history|length }})</h2>
+                    </div>
+                    {% if listening_history %}
+                        <div class="history-table-wrapper">
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Track</th>
+                                        <th>Artist</th>
+                                        <th>Provider</th>
+                                        <th>Played At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in listening_history %}
+                                        <tr>
+                                            <td class="track-title-cell">{{ item.track_title }}</td>
+                                            <td>{{ item.artist_name }}</td>
+                                            <td><span class="provider-tag provider-{{ item.provider }}">{{ item.provider }}</span></td>
+                                            <td class="text-muted small">{{ item.played_at[:19].replace('T', ' ') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">No listening history recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Profile update AJAX
+        document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('profileFullName').value;
+            const country = document.getElementById('profileCountry').value;
+            const msg = document.getElementById('profileStatusMsg');
+            msg.textContent = 'Saving...';
+            try {
+                const res = await fetch('/auth/profile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({full_name: fullName, country: country})
+                });
+                if (res.ok) {
+                    msg.textContent = '✓ Profile saved.';
+                    msg.className = 'status-msg status-success';
+                } else {
+                    msg.textContent = 'Failed to update profile.';
+                    msg.className = 'status-msg status-error';
+                }
+            } catch (err) {
+                msg.textContent = 'Connection error.';
+                msg.className = 'status-msg status-error';
+            }
+        });
+
+        // Preferences update AJAX
+        document.getElementById('preferencesForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const provider = document.getElementById('preferredProvider').value;
+            const lang = document.getElementById('preferredLanguage').value;
+            const autoplay = document.getElementById('prefAutoplay').checked;
+            const msg = document.getElementById('prefStatusMsg');
+            msg.textContent = 'Saving...';
+            try {
+                const res = await fetch('/auth/preferences', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        preferred_music_provider: provider,
+                        preferred_language: lang,
+                        autoplay_enabled: autoplay
+                    })
+                });
+                if (res.ok) {
+                    msg.textContent = '✓ Preferences updated.';
+                    msg.className = 'status-msg status-success';
+                } else {
+                    msg.textContent = 'Failed to update preferences.';
+                    msg.className = 'status-msg status-error';
+                }
+            } catch (err) {
+                msg.textContent = 'Connection error.';
+                msg.className = 'status-msg status-error';
+            }
+        });
+    </script>
+</body>
+</html>

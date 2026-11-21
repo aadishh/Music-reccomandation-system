@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera & Emotion Consent - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="legal-page">
+    <div class="container legal-container modal-view-container">
+        <div class="consent-modal-card">
+            <div class="consent-header">
+                <span class="consent-badge">Consent Verification Required</span>
+                <h2>📷 Webcam & Facial Emotion Processing Notice</h2>
+                <p class="text-muted">Policy Version: {{ camera_consent_version }}</p>
+            </div>
+
+            <div class="consent-body">
+                <div class="notice-highlight">
+                    <p>Before activating your webcam, please review and affirmatively approve how your camera frames will be handled.</p>
+                </div>
+
+                <div class="consent-disclosure-grid">
+                    <div class="disclosure-item">
+                        <div class="disclosure-icon">🎯</div>
+                        <div class="disclosure-text">
+                            <h3>Why is webcam access needed?</h3>
+                            <p>To capture brief facial frames so our DeepFace AI can infer your emotional expression and recommend music tailored to your mood.</p>
+                        </div>
+                    </div>
+
+                    <div class="disclosure-item">
+                        <div class="disclosure-icon">⚡</div>
+                        <div class="disclosure-text">
+                            <h3>Strictly In-Memory Server Processing</h3>
+                            <p>Frames are sent over encrypted HTTPS and decoded directly in volatile server memory (RAM). <strong>They are never saved to disk, SSD, or database.</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="disclosure-item">
+                        <div class="disclosure-icon">🛡️</div>
+                        <div class="disclosure-text">
+                            <h3>No Biometric Templates or Face Recognition</h3>
+                            <p>We do not construct face embeddings, biometric identity vectors, or compare your face against any identification registry. Frames are discarded immediately after emotion scoring.</p>
+                        </div>
+                    </div>
+
+                    <div class="disclosure-item">
+                        <div class="disclosure-icon">🔄</div>
+                        <div class="disclosure-text">
+                            <h3>Withdraw Consent Anytime</h3>
+                            <p>You can revoke camera consent at any time from the Privacy Dashboard. Revoking consent halts camera processing immediately.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="unbundled-optin-box">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="consentEmotionHistory" name="consent_emotion_history">
+                        <span><strong>Optional Opt-in:</strong> Also save my detected emotion results to my personal Emotion Timeline. (Leave unchecked if you prefer real-time only with zero history persistence.)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="consent-actions">
+                <button type="button" id="affirmCameraConsentBtn" class="btn btn-success btn-large">
+                    ✅ I Consent &bull; Enable Camera Processing
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-large">
+                    ❌ Decline &bull; Use Manual Mood Selector
+                </a>
+            </div>
+
+            <div class="consent-footer-note">
+                <p>Learn more in our full <a href="{{ url_for('privacy.privacy_policy') }}" target="_blank">Privacy Policy</a> and <a href="{{ url_for('privacy.terms_and_conditions') }}" target="_blank">Terms & Conditions</a>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('affirmCameraConsentBtn')?.addEventListener('click', async () => {
+            const saveHistory = document.getElementById('consentEmotionHistory')?.checked;
+            try {
+                // Affirm camera consent
+                const res = await fetch('/privacy/consent', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        consent_type: 'camera_processing',
+                        accepted: true,
+                        consent_method: 'camera_consent_page'
+                    })
+                });
+
+                if (saveHistory) {
+                    await fetch('/privacy/consent', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            consent_type: 'emotion_history',
+                            accepted: true,
+                            consent_method: 'camera_consent_page'
+                        })
+                    });
+                }
+
+                if (res.ok) {
+                    window.location.href = "{{ url_for('index') }}?camera_ready=1";
+                } else {
+                    alert('Could not record consent. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error while recording consent.');
+            }
+        });
+    </script>
+</body>
+</html>

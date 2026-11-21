@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="{{ url_for('index') }}" class="auth-logo">🎵 Emotion Recommender</a>
+                <h2>Welcome Back</h2>
+                <p class="text-muted">Sign in to access your recommendations, favorites, and history.</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-banner flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.login_view', next=next_url) }}" method="POST" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com" class="form-control" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label-row">
+                        <label for="password">Password</label>
+                        <a href="{{ url_for('auth.forgot_password') }}" class="auth-link-subtle">Forgot Password?</a>
+                    </div>
+                    <input type="password" id="password" name="password" required placeholder="••••••••" class="form-control" autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-large">Sign In</button>
+            </form>
+
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <div class="oauth-buttons">
+                <a href="{{ url_for('auth.google_oauth') }}" class="btn btn-oauth btn-block">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+                    Continue with Google
+                </a>
+            </div>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{{ url_for('auth.register_view') }}" class="auth-link">Create Account</a></p>
+                <p class="terms-disclaimer">
+                    By signing in, you agree to our <a href="{{ url_for('privacy.terms_and_conditions') }}" target="_blank">Terms</a> and <a href="{{ url_for('privacy.privacy_policy') }}" target="_blank">Privacy Policy</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

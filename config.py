@@ -45,6 +45,18 @@ FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
 APP_API_KEY = os.getenv("APP_API_KEY", "").strip()
 SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", False)
 REQUIRE_AUTH_FOR_API = _env_bool("REQUIRE_AUTH_FOR_API", True)
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8080").rstrip("/")
+
+# Supabase PostgreSQL & Auth Credentials
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+# Privacy & Legal Policy Versions
+PRIVACY_POLICY_VERSION = os.getenv("PRIVACY_POLICY_VERSION", "2026.1")
+TERMS_VERSION = os.getenv("TERMS_VERSION", "2026.1")
+CAMERA_CONSENT_VERSION = os.getenv("CAMERA_CONSENT_VERSION", "2026.1")
+DEFAULT_JURISDICTION = os.getenv("DEFAULT_JURISDICTION", "IN").upper()
 
 # Deployment & Licensing Policy
 # Supported values: "non_commercial" (default for local/demo) or "commercial" (strict commercial checks)

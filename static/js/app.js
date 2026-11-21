@@ -34,11 +34,18 @@ class EmotionMusicApp {
         this.songsBeforeRecheck = 3;
         this.autoCaptureIntervalSeconds = 30;
         this.currentEmotion = null;
+        this.hasCameraConsent = Boolean(window.APP_CONFIG && window.APP_CONFIG.hasCameraConsent);
 
         this.initDom();
         this.bindEvents();
         this.initPlayer();
         this.loadInitialData();
+
+        // Check if redirected from consent page
+        if (window.location.search.includes('camera_ready=1')) {
+            this.hasCameraConsent = true;
+            this.startCamera();
+        }
     }
 
     initDom() {
@@ -116,6 +123,12 @@ class EmotionMusicApp {
         this.resetCounterBtn = document.getElementById('resetCounter');
         this.songsCountEl = document.getElementById('songsCount');
         this.activeProvidersBadge = document.getElementById('activeProvidersBadge');
+
+        // Consent Modal DOM
+        this.cameraConsentModal = document.getElementById('cameraConsentModal');
+        this.confirmCameraConsentBtn = document.getElementById('confirmCameraConsentBtn');
+        this.cancelCameraConsentBtn = document.getElementById('cancelCameraConsentBtn');
+        this.modalOptinEmotionHistory = document.getElementById('modalOptinEmotionHistory');
     }
 
     bindEvents() {
@@ -124,6 +137,16 @@ class EmotionMusicApp {
         this.captureBtn.addEventListener('click', () => this.captureEmotion());
         this.autoCaptureBtn.addEventListener('click', () => this.toggleAutoCapture());
         this.stopCameraBtn.addEventListener('click', () => this.stopCamera());
+
+        // Camera consent modal actions
+        if (this.confirmCameraConsentBtn) {
+            this.confirmCameraConsentBtn.addEventListener('click', () => this.handleAffirmCameraConsent());
+        }
+        if (this.cancelCameraConsentBtn) {
+            this.cancelCameraConsentBtn.addEventListener('click', () => {
+                if (this.cameraConsentModal) this.cameraConsentModal.style.display = 'none';
+            });
+        }
 
         // Recommendation preference controls
         this.recModeSelect.addEventListener('change', () => this.onRecModeChange());
@@ -220,7 +243,57 @@ class EmotionMusicApp {
 
     // --- Camera & Emotion Pipeline ---
 
+    showCameraConsentModal() {
+        if (this.cameraConsentModal) {
+            this.cameraConsentModal.style.display = 'flex';
+        } else {
+            window.location.href = '/privacy/camera-consent';
+        }
+    }
+
+    async handleAffirmCameraConsent() {
+        const optinHistory = this.modalOptinEmotionHistory ? this.modalOptinEmotionHistory.checked : false;
+        try {
+            await fetch('/privacy/consent', {
+                method: 'POST',
+                headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    consent_type: 'camera_processing',
+                    accepted: true,
+                    consent_method: 'in_app_modal'
+                })
+            });
+
+            if (optinHistory) {
+                await fetch('/privacy/consent', {
+                    method: 'POST',
+                    headers: this.getHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({
+                        consent_type: 'emotion_history',
+                        accepted: true,
+                        consent_method: 'in_app_modal'
+                    })
+                });
+            }
+
+            this.hasCameraConsent = true;
+            if (this.cameraConsentModal) this.cameraConsentModal.style.display = 'none';
+            await this._startCameraStream();
+        } catch (err) {
+            console.error('Consent recording error:', err);
+            alert('Failed to record consent. Please try again.');
+        }
+    }
+
     async startCamera() {
+        if (!this.hasCameraConsent) {
+            this.showCameraConsentModal();
+            return;
+        }
+        await this._startCameraStream();
+    }
+
+    async _startCameraStream() {
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 throw new Error('Camera access is not supported by your browser.');
@@ -295,6 +368,11 @@ class EmotionMusicApp {
             });
 
             const result = await response.json();
+            if (response.status === 403 && result.consent_required === 'camera_processing') {
+                this.hasCameraConsent = false;
+                this.showCameraConsentModal();
+                return;
+            }
             if (result.error) throw new Error(result.error);
 
             this.displayEmotionResult(result);
@@ -680,11 +758,15 @@ class EmotionMusicApp {
     }
 
     updateNowPlayingUI(track) {
-        this.currentTrackTitle.textContent = track.title || 'Untitled Track';
-        this.currentTrackArtist.textContent = track.artist || 'Unknown Artist';
+        const titleText = track.title || 'Untitled Track';
+        const artistText = track.artist || 'Unknown Artist';
+        this.currentTrackTitle.textContent = titleText;
+        this.currentTrackTitle.title = titleText;
+        this.currentTrackArtist.textContent = artistText;
+        this.currentTrackArtist.title = artistText;
         this.metaGenre.textContent = track.genre ? `Genre: ${track.genre}` : '';
-        this.metaBpm.textContent = track.bpm ? `&bull; ${Math.round(track.bpm)} BPM` : '';
-        this.metaEnergy.textContent = (track.energy !== null && track.energy !== undefined) ? `&bull; Energy: ${Math.round(track.energy * 100)}%` : '';
+        this.metaBpm.textContent = track.bpm ? `• ${Math.round(track.bpm)} BPM` : '';
+        this.metaEnergy.textContent = (track.energy !== null && track.energy !== undefined) ? `• Energy: ${Math.round(track.energy * 100)}%` : '';
 
         this.currentProviderBadge.textContent = track.provider.toUpperCase();
         this.currentProviderBadge.className = `badge badge-provider ${track.provider.toLowerCase()}`;
@@ -915,8 +997,8 @@ class EmotionMusicApp {
                 <button class="btn-play-track" title="Play Track">▶</button>
                 <img src="${artworkSrc}" alt="Artwork" class="track-item-artwork" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'44\\' height=\\'44\\'%3E%3Crect width=\\'44\\' height=\\'44\\' fill=\\'%23222\\'/ %3E%3C/svg%3E'">
                 <div class="track-item-info">
-                    <div class="track-item-title">${this.escapeHtml(track.title || 'Untitled')}</div>
-                    <div class="track-item-artist">${this.escapeHtml(track.artist || 'Unknown')}</div>
+                    <div class="track-item-title" title="${this.escapeHtml(track.title || 'Untitled')}">${this.escapeHtml(track.title || 'Untitled')}</div>
+                    <div class="track-item-artist" title="${this.escapeHtml(track.artist || 'Unknown')}">${this.escapeHtml(track.artist || 'Unknown')}</div>
                     <div class="track-item-tags">
                         <span class="badge badge-provider ${providerName}">${providerName}</span>
                         ${track.genre ? `<span class="badge badge-license">${this.escapeHtml(track.genre)}</span>` : ''}

@@ -20,6 +20,13 @@ from music.registry import ProviderRegistry
 from music.routes import music_bp
 from music.storage import MusicStorage
 
+from auth.middleware import get_current_user_from_request, optional_auth
+from auth.routes import auth_bp
+from dashboard.routes import dashboard_bp
+from database.repository import repository
+from privacy.consent import consent_manager
+from privacy.routes import privacy_bp
+
 # Suppress TensorFlow warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
@@ -99,15 +106,21 @@ class DeepFaceEmotionSystem:
             if img is None:
                 raise ValueError("Could not decode image")
 
-            cv2.imwrite(config.CAPTURED_IMAGE_PATH, img)
-
-            logger.info("Analyzing emotion with DeepFace...")
-            predictions = DeepFace.analyze(img, actions=["emotion"], enforce_detection=False)
+            # Strictly in-memory analysis: frames are never saved to disk or persistent storage
+            logger.info("Analyzing emotion with DeepFace (in-memory, no disk persistence)...")
+            try:
+                predictions = DeepFace.analyze(img, actions=["emotion"], enforce_detection=False)
+            finally:
+                # Immediate cleanup: prevent image retention in memory or templates
+                del nparr, image_bytes
             emotion_data = predictions[0] if isinstance(predictions, list) else predictions
 
             dominant_emotion = str(emotion_data["dominant_emotion"]).lower()
             emotion_scores_clean = convert_to_json_serializable(emotion_data["emotion"])
             emotion_percentages = {k.lower(): round(float(v), 2) for k, v in emotion_scores_clean.items()}
+
+            # Free raw decoded image array from memory
+            del img
 
             self.current_emotion = dominant_emotion
             self.last_check_time = datetime.now(timezone.utc)
@@ -192,16 +205,26 @@ def create_app(
     flask_app.extensions["emotion_system"] = emotion_sys
 
     flask_app.register_blueprint(music_bp)
+    flask_app.register_blueprint(auth_bp)
+    flask_app.register_blueprint(privacy_bp)
+    flask_app.register_blueprint(dashboard_bp)
 
     @flask_app.route("/")
     def index():
         """Serve the main web interface and provision a signed session + CSRF token."""
-        _, csrf_token = ensure_web_session()
+        user_id, csrf_token = ensure_web_session()
+        user = get_current_user_from_request()
+        has_camera_consent = consent_manager.has_consent(user_id, "camera_processing")
+        consents = consent_manager.get_all_consents(user_id)
         return render_template(
             "index.html",
             csrf_token=csrf_token,
             deployment_mode=active_registry.licensing_validator.deployment_mode.value,
             supported_emotions=config.SUPPORTED_EMOTIONS,
+            user=user,
+            has_camera_consent=has_camera_consent,
+            consents=consents,
+            policy_version=config.PRIVACY_POLICY_VERSION,
         )
 
     @flask_app.route("/camera-test")
@@ -222,15 +245,57 @@ def create_app(
             sys_inst: DeepFaceEmotionSystem = current_app.extensions["emotion_system"]
             engine: EmotionRecommendationEngine = current_app.extensions["recommendation_engine"]
 
+            # Strict Privacy Gate: Verify camera & facial processing consent before analyzing frames
+            has_cam_consent = consent_manager.has_consent(user_id, "camera_processing")
+            if not has_cam_consent:
+                # Check for just-in-time affirmative consent grant in request payload
+                if data.get("camera_consent_granted") is True:
+                    consent_manager.record_consent(
+                        user_id=user_id,
+                        consent_type="camera_processing",
+                        accepted=True,
+                        jurisdiction=data.get("jurisdiction"),
+                        consent_method="jit_modal_affirmation",
+                    )
+                    has_cam_consent = True
+                else:
+                    return (
+                        jsonify(
+                            {
+                                "error": "Explicit affirmative consent is required before processing webcam frames.",
+                                "consent_required": "camera_processing",
+                                "policy_version": config.CAMERA_CONSENT_VERSION,
+                                "disclosure": (
+                                    "Webcam frames are analyzed strictly in-memory and discarded immediately after inference. "
+                                    "No photos, video recordings, or facial biometric templates are ever saved to disk or persistent storage."
+                                ),
+                            }
+                        ),
+                        403,
+                    )
+
             result = sys_inst.analyze_emotion_from_base64(image_data)
+            dominant_emotion = result.get("dominant_emotion", "neutral")
+            confidence = float(result.get("confidence", 75.0))
+
+            # Opt-in Emotion History: Only store detected emotion if user explicitly opted in
+            if consent_manager.has_consent(user_id, "emotion_history"):
+                try:
+                    repository.record_emotion(
+                        user_id=user_id,
+                        detected_emotion=dominant_emotion,
+                        confidence_score=confidence,
+                    )
+                except Exception as repo_exc:
+                    logger.warning("Could not persist emotion event: %s", repo_exc)
 
             mode = str(data.get("mode") or RecommendationMode.MOOD_MATCHING.value).strip().lower()
             if mode not in {RecommendationMode.MOOD_MATCHING.value, RecommendationMode.MOOD_SHIFTING.value}:
                 mode = RecommendationMode.MOOD_MATCHING.value
 
             rec_request = RecommendationRequest(
-                detected_emotion=result.get("dominant_emotion", "neutral"),
-                emotion_confidence=float(result.get("confidence", 75.0)),
+                detected_emotion=dominant_emotion,
+                emotion_confidence=confidence,
                 user_selected_mood=data.get("mood") or None,
                 preferred_genres=data.get("genres") or [],
                 preferred_artists=data.get("artists") or [],
@@ -243,7 +308,7 @@ def create_app(
             recommendations = engine.recommend(rec_request)
 
             sys_inst.songs_played += 1
-            result["emotion"] = result.get("dominant_emotion", "neutral")
+            result["emotion"] = dominant_emotion
             result["songs_played"] = sys_inst.songs_played
             result["recommendations"] = recommendations
             result["recommended_tracks"] = recommendations.get("tracks", [])
@@ -260,6 +325,30 @@ def create_app(
             data = request.get_json(silent=True) or {}
             enable = bool(data.get("enable", False))
             sys_inst: DeepFaceEmotionSystem = current_app.extensions["emotion_system"]
+
+            user_id, _ = ensure_web_session()
+            if enable and not consent_manager.has_consent(user_id, "camera_processing"):
+                if data.get("camera_consent_granted") is True:
+                    consent_manager.record_consent(
+                        user_id=user_id,
+                        consent_type="camera_processing",
+                        accepted=True,
+                        jurisdiction=data.get("jurisdiction"),
+                        consent_method="jit_modal_affirmation",
+                    )
+                else:
+                    return (
+                        jsonify(
+                            {
+                                "error": "Camera processing consent required before enabling auto-capture.",
+                                "consent_required": "camera_processing",
+                                "disclosure": (
+                                    "Webcam frames are analyzed strictly in-memory and discarded immediately after inference."
+                                ),
+                            }
+                        ),
+                        403,
+                    )
 
             if enable:
                 sys_inst.start_auto_capture()

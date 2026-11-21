@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Dashboard & Consent Controls - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="dashboard-page">
+    <div class="container dashboard-container">
+        <!-- Top Navigation -->
+        <header class="dashboard-header">
+            <div class="header-brand">
+                <a href="{{ url_for('index') }}" class="brand-link">🎵 Emotion Music Recommender</a>
+                <span class="badge badge-privacy">Privacy Controls</span>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-small">🎧 Open Player</a>
+                {% if is_authenticated %}
+                    <a href="{{ url_for('dashboard.user_dashboard') }}" class="btn btn-secondary btn-small">👤 User Profile</a>
+                {% endif %}
+                <a href="{{ url_for('privacy.privacy_policy') }}" class="btn btn-secondary btn-small" target="_blank">Privacy Policy</a>
+            </div>
+        </header>
+
+        <div class="privacy-dashboard-intro card">
+            <h2>🛡️ Consent Management & Data Rights Center</h2>
+            <p class="text-muted">
+                In compliance with India's <strong>Digital Personal Data Protection Act, 2023</strong>, California's <strong>CCPA/CPRA</strong>, and the <strong>GDPR</strong>, you maintain total control over your data. You may inspect your consent audit trail, download your data archive, or withdraw permissions at any time.
+            </p>
+            <div class="privacy-meta-pills">
+                <span class="meta-pill"><strong>User ID:</strong> {{ user_id[:12] }}...</span>
+                <span class="meta-pill"><strong>Privacy Policy:</strong> v{{ policy_version }}</span>
+                <span class="meta-pill"><strong>Camera Terms:</strong> v{{ camera_version }}</span>
+            </div>
+        </div>
+
+        <main class="dashboard-grid">
+            <!-- Left: Interactive Consent Toggles -->
+            <div class="dashboard-col-left">
+                <div class="card consent-toggles-card">
+                    <div class="card-header">
+                        <h2>⚙️ Active Permissions & Consents</h2>
+                    </div>
+                    <div class="consent-toggles-list">
+                        <!-- Camera Processing -->
+                        <div class="consent-toggle-row">
+                            <div class="toggle-info">
+                                <strong>📷 Camera & Emotion Processing</strong>
+                                <p class="small text-muted">Strictly in-memory facial emotion inference. Zero disk writes; no face recognition templates.</p>
+                            </div>
+                            <div class="toggle-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggleCameraProcessing" data-type="camera_processing" {% if consents.camera_processing %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Emotion History -->
+                        <div class="consent-toggle-row">
+                            <div class="toggle-info">
+                                <strong>🧠 Emotion History Recording</strong>
+                                <p class="small text-muted">Persist detected emotions to your private timeline. When turned off, detections are discarded instantly.</p>
+                            </div>
+                            <div class="toggle-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggleEmotionHistory" data-type="emotion_history" {% if consents.emotion_history %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Analytics -->
+                        <div class="consent-toggle-row">
+                            <div class="toggle-info">
+                                <strong>📊 Performance & Analytics</strong>
+                                <p class="small text-muted">Aggregate, anonymous telemetry to improve music streaming response times.</p>
+                            </div>
+                            <div class="toggle-action">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggleAnalytics" data-type="analytics" {% if consents.analytics %}checked{% endif %}>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Terms & Conditions Status -->
+                        <div class="consent-toggle-row readonly-row">
+                            <div class="toggle-info">
+                                <strong>📜 Terms and Conditions</strong>
+                                <p class="small text-muted">Accepted for account access. <a href="{{ url_for('privacy.terms_and_conditions') }}" target="_blank">Review Terms</a></p>
+                            </div>
+                            <div class="toggle-action">
+                                <span class="badge badge-success">Agreed</span>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Policy Status -->
+                        <div class="consent-toggle-row readonly-row">
+                            <div class="toggle-info">
+                                <strong>🔒 Privacy Policy</strong>
+                                <p class="small text-muted">Accepted for account access. <a href="{{ url_for('privacy.privacy_policy') }}" target="_blank">Review Policy</a></p>
+                            </div>
+                            <div class="toggle-action">
+                                <span class="badge badge-success">Agreed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Rights & Export Card -->
+                <div class="card data-rights-card">
+                    <div class="card-header">
+                        <h2>📦 Data Subject Rights (Access & Erasure)</h2>
+                    </div>
+                    <div class="data-rights-actions">
+                        <div class="rights-action-item">
+                            <div>
+                                <strong>Right to Data Portability (JSON Export)</strong>
+                                <p class="small text-muted">Download all personal information, history, preferences, and consent logs in structured JSON.</p>
+                            </div>
+                            <a href="{{ url_for('privacy.export_user_data_endpoint') }}" class="btn btn-secondary btn-small">📥 Download JSON</a>
+                        </div>
+
+                        <div class="rights-action-item">
+                            <div>
+                                <strong>Erase Emotion History</strong>
+                                <p class="small text-muted">Permanently delete all stored emotion records from your profile.</p>
+                            </div>
+                            <button type="button" id="clearEmotionBtn" class="btn btn-warning btn-small">Clear Emotion Log</button>
+                        </div>
+
+                        <div class="rights-action-item">
+                            <div>
+                                <strong>Erase Listening History</strong>
+                                <p class="small text-muted">Permanently delete all recorded song plays.</p>
+                            </div>
+                            <button type="button" id="clearHistoryBtn" class="btn btn-warning btn-small">Clear Listening Log</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone: Account Deletion -->
+                {% if is_authenticated %}
+                <div class="card danger-card">
+                    <div class="card-header">
+                        <h2>⚠️ Danger Zone &bull; Account Erasure</h2>
+                    </div>
+                    <div class="danger-body">
+                        <p class="small">
+                            Permanently delete your account and all associated personal data. This initiates a cascading deletion across all PostgreSQL tables and your Supabase Auth user record. <strong>This action cannot be undone.</strong>
+                        </p>
+                        <button type="button" id="deleteAccountBtn" class="btn btn-danger btn-small">Delete My Account Permanently</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right: Immutable Consent Audit Trail -->
+            <div class="dashboard-col-right">
+                <div class="card audit-card">
+                    <div class="card-header">
+                        <h2>📜 Immutable Consent Audit Trail</h2>
+                        <span class="badge badge-count">{{ consent_history|length }} Events</span>
+                    </div>
+                    <p class="small text-muted" style="margin-bottom: 15px;">
+                        Statutory audit log recorded pursuant to DPDP Act (s. 6) and GDPR (Art. 7). Every consent grant, withdrawal, and update is preserved as an immutable ledger event.
+                    </p>
+
+                    {% if consent_history %}
+                        <div class="audit-table-wrapper">
+                            <table class="dashboard-table audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp (UTC)</th>
+                                        <th>Consent Category</th>
+                                        <th>Action</th>
+                                        <th>Method</th>
+                                        <th>Jurisdiction</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in consent_history %}
+                                        <tr>
+                                            <td class="text-muted small">{{ event.consent_timestamp[:19].replace('T', ' ') }}</td>
+                                            <td><code>{{ event.consent_type }}</code></td>
+                                            <td>
+                                                {% if event.withdrawn_at %}
+                                                    <span class="badge badge-danger">Withdrawn</span>
+                                                {% elif event.accepted %}
+                                                    <span class="badge badge-success">Granted</span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary">Declined</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="small">{{ event.consent_method }}</td>
+                                            <td><span class="jurisdiction-tag">{{ event.jurisdiction }}</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="empty-state">No consent records yet recorded for this session.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Account Deletion Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay" style="display: none;">
+        <div class="modal-dialog">
+            <h3>⚠️ Confirm Permanent Account Deletion</h3>
+            <p>
+                Are you absolutely sure? All profile data, favorites, listening history, and your authentication credentials will be <strong>permanently erased</strong> from Supabase.
+            </p>
+            <form action="{{ url_for('auth.delete_account') }}" method="POST">
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-danger">Yes, Permanently Delete My Account</button>
+                    <button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Consent Toggle Handler
+        document.querySelectorAll('.switch input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', async (e) => {
+                const consentType = e.target.dataset.type;
+                const accepted = e.target.checked;
+                const endpoint = accepted ? '/privacy/consent' : '/privacy/withdraw';
+
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            consent_type: consentType,
+                            accepted: accepted,
+                            consent_method: 'privacy_dashboard_toggle'
+                        })
+                    });
+                    if (res.ok) {
+                        // Refresh page to update immutable audit trail
+                        window.location.reload();
+                    } else {
+                        alert('Could not update consent setting.');
+                        e.target.checked = !accepted;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Connection error while updating consent.');
+                    e.target.checked = !accepted;
+                }
+            });
+        });
+
+        // Clear emotion history
+        document.getElementById('clearEmotionBtn')?.addEventListener('click', async () => {
+            if (!confirm('Permanently delete all stored emotion history?')) return;
+            try {
+                const res = await fetch('/privacy/delete-data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({category: 'emotion_history'})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Emotion history cleared.');
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to clear emotion history.');
+                }
+            } catch (err) {
+                alert('Connection error.');
+            }
+        });
+
+        // Clear listening history
+        document.getElementById('clearHistoryBtn')?.addEventListener('click', async () => {
+            if (!confirm('Permanently delete all stored listening history?')) return;
+            try {
+                const res = await fetch('/privacy/delete-data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({category: 'listening_history'})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Listening history cleared.');
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to clear listening history.');
+                }
+            } catch (err) {
+                alert('Connection error.');
+            }
+        });
+
+        // Delete account modal
+        const deleteModal = document.getElementById('deleteModal');
+        document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
+            if (deleteModal) deleteModal.style.display = 'flex';
+        });
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
+            if (deleteModal) deleteModal.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

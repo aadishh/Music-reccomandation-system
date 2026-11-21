@@ -170,6 +170,20 @@ def get_playback(track_id: str):
                 track_data=track_snapshot,
             )
 
+        # Dual-write to repository for persistent Supabase listening history
+        try:
+            from database.repository import repository
+
+            repository.record_listen(
+                user_id=g.user_id,
+                track_id=track_id,
+                provider=provider_name,
+                track_title=title or "Unknown Track",
+                artist_name=artist or "Unknown Artist",
+            )
+        except Exception:
+            pass
+
         return jsonify(playback.to_dict())
     except ValueError as exc:
         return jsonify({"error": str(exc), "code": "invalid_track_id"}), 400
@@ -326,6 +340,23 @@ def manage_favorites():
         track_data=track_data,
         is_favorite=is_favorite,
     )
+
+    # Dual-write to repository for persistent Supabase favorites
+    try:
+        from database.repository import repository
+
+        repository.set_favorite(
+            user_id=g.user_id,
+            track_id=track_id,
+            provider=provider_name,
+            track_title=track_data.get("title") or "Unknown Track",
+            artist_name=track_data.get("artist") or "Unknown Artist",
+            thumbnail_url=track_data.get("artwork_url") or track_data.get("artwork") or "",
+            is_favorite=is_favorite,
+        )
+    except Exception:
+        pass
+
     return jsonify({"success": True, **result})
 
 

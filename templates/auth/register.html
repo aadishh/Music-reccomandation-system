@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Emotion Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-wrapper">
+        <div class="auth-card auth-card-wide">
+            <div class="auth-header">
+                <a href="{{ url_for('index') }}" class="auth-logo">🎵 Emotion Recommender</a>
+                <h2>Create Your Account</h2>
+                <p class="text-muted">Join to experience multi-provider AI emotion-driven music streaming.</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-banner flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.register_view') }}" method="POST" class="auth-form">
+                <div class="form-row">
+                    <div class="form-group col-half">
+                        <label for="full_name">Full Name or Pseudonym</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Alex Morgan" class="form-control" autocomplete="name">
+                    </div>
+                    <div class="form-group col-half">
+                        <label for="country">Country / Jurisdiction</label>
+                        <select id="country" name="country" class="form-control">
+                            <option value="IN" {% if default_jurisdiction == 'IN' %}selected{% endif %}>India (DPDP Act, 2023)</option>
+                            <option value="US" {% if default_jurisdiction == 'US' %}selected{% endif %}>United States (CCPA/CPRA)</option>
+                            <option value="EU" {% if default_jurisdiction == 'EU' %}selected{% endif %}>European Union (GDPR)</option>
+                            <option value="GB">United Kingdom (UK GDPR)</option>
+                            <option value="CA">Canada (PIPEDA)</option>
+                            <option value="AU">Australia (Privacy Act)</option>
+                            <option value="OTHER">Other Region</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required-star">*</span></label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com" class="form-control" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span class="required-star">*</span> (minimum 8 characters)</label>
+                    <input type="password" id="password" name="password" required minlength="8" placeholder="••••••••" class="form-control" autocomplete="new-password">
+                </div>
+
+                <!-- Unbundled, Affirmative Consent Section -->
+                <div class="consent-group-card">
+                    <h4>📋 Explicit Consent & Data Permissions</h4>
+                    <p class="text-muted small">In compliance with India DPDP Act 2023, US State Privacy Laws, and GDPR, each permission is itemized separately. Optional permissions are never pre-checked.</p>
+
+                    <div class="consent-checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="consent_terms" name="consent_terms" required>
+                            <span>I have read and agree to the <a href="{{ url_for('privacy.terms_and_conditions') }}" target="_blank">Terms and Conditions</a> (v{{ terms_version }}). <span class="required-tag">Required</span></span>
+                        </label>
+                    </div>
+
+                    <div class="consent-checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="consent_privacy" name="consent_privacy" required>
+                            <span>I have read and agree to the <a href="{{ url_for('privacy.privacy_policy') }}" target="_blank">Privacy Policy</a> (v{{ privacy_version }}). <span class="required-tag">Required</span></span>
+                        </label>
+                    </div>
+
+                    <div class="consent-checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="consent_camera" name="consent_camera">
+                            <span><strong>Camera Processing (Optional):</strong> I affirmatively permit the app to analyze webcam frames strictly in-memory on the server to detect emotion. (Frames are never saved to disk; no face biometric templates are created.)</span>
+                        </label>
+                    </div>
+
+                    <div class="consent-checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="consent_emotion_history" name="consent_emotion_history">
+                            <span><strong>Emotion History (Optional):</strong> I permit the app to save detected emotion results (e.g., "happy", confidence score) to my personal timeline.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-large">Create Account</button>
+            </form>
+
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <div class="oauth-buttons">
+                <a href="{{ url_for('auth.google_oauth') }}" class="btn btn-oauth btn-block">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+                    Sign Up with Google
+                </a>
+            </div>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{{ url_for('auth.login_view') }}" class="auth-link">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
