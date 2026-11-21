@@ -1,185 +1,480 @@
-# 🎵 DeepFace Emotion Multi-Provider Music Recommender
+# 🎵 DeepFace Emotion-Based Multi-Provider Music Recommender
 
-An AI-driven music recommendation and authorized streaming platform built with **Python**, **Flask**, **DeepFace**, **OpenCV**, **Supabase PostgreSQL & Authentication**, and a **Multi-Provider Music API Architecture** supporting **Jamendo**, **Audius**, and **Mubert**.
+An AI-powered music recommendation platform that detects facial emotions and recommends music using a multi-provider architecture.
 
-Completely independent of Spotify, this system detects facial emotions from a webcam, normalizes music metadata across multiple providers into a unified schema, enforces strict copyright and commercial licensing verification, manages user authentication with Supabase, adheres to global privacy laws (India DPDP Act 2023 & Rules 2025, California CCPA/CPRA, Illinois BIPA, GDPR), and plays authorized audio streams directly inside a unified in-browser player.
+Built with **Python, Flask, DeepFace, OpenCV, Supabase PostgreSQL**, and integrated music providers including **Jamendo, Audius, and Mubert**.
+
+The platform provides emotion-aware music discovery, unified music metadata, licensing verification, secure user authentication, privacy-focused emotion processing, and in-browser audio playback.
+
+Designed independently of Spotify, the system uses authorized provider APIs and respects upstream streaming and licensing restrictions.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. Facial Emotion Recognition & In-Memory Privacy
-- **Strictly In-Memory Processing**: Webcam frames are streamed over HTTPS, decoded in server RAM, analyzed using DeepFace, and **immediately freed from memory**.
-- **Zero Disk Retention Guarantee**: No photographs, video recordings, or facial biometric templates are ever written to disk or persistent storage.
-- **Biometric Law Compliance**: Operates in full compliance with Illinois BIPA (740 ILCS 14/), Texas CUBI, and Washington HB 1493 (no facial vectors, landmarks, or face embeddings are constructed or stored).
-- **DeepFace AI**: Detects 7 primary emotions (`happy`, `sad`, `angry`, `neutral`, `fear`, `surprise`, `disgust`) with automatic fallback to lightweight heuristics if TensorFlow is unavailable.
+### 1. Facial Emotion Recognition
 
-### 2. Multi-Provider Music Abstraction Layer
-- **Jamendo API v3.0**: Catalog search, Creative Commons tag discovery, audio streaming (`mp32`), and Jamendo Pro licensing checks.
-- **Audius REST API v1**: Decentralized catalog search, trending tracks, stream endpoint resolution with gating enforcement (`is_streamable`, `stream_conditions`), and Open Music License / Creative Commons tracking.
-- **Mubert API v3**: Optional generative AI channels and time-limited stream links with B2B commercial license verification.
-- **Unified Track Schema**: Standardized domain model normalizing track IDs, titles, artists, albums, genres, duration, BPM, energy, mood tags, artwork, authorized playback URLs, and licensing compliance metadata.
+- Real-time facial emotion analysis using webcam input.
+- DeepFace-powered emotion detection.
+- Supports seven primary emotions:
+  - Happy
+  - Sad
+  - Angry
+  - Neutral
+  - Fear
+  - Surprise
+  - Disgust
+- Lightweight fallback emotion detection when TensorFlow or DeepFace is unavailable.
+- In-memory image processing designed to avoid persistent storage of webcam frames.
+- Explicit camera consent before emotion analysis.
 
-### 3. Strict Copyright & Commercial Licensing Engine
-- Supports `non_commercial` and `commercial` deployment policies.
-- Enforces per-track permissions: blocks tracks carrying Non-Commercial licenses (`CC-NC`), unverified free-tier Jamendo streams, and Audius `All Rights Reserved` or gated tracks in commercial mode.
-- Generates required attribution strings for Creative Commons tracks.
-- Never bypasses provider restrictions or caches/proxies audio payloads.
+### 2. Multi-Provider Music Integration
 
-### 4. Supabase PostgreSQL Database & Authentication
-- **PostgreSQL Database**: Persistent storage for profiles, user preferences, consent records, emotion history, listening history, favorite tracks, policy versions, and security audit logs.
-- **Row Level Security (RLS)**: PostgreSQL RLS policies enforce that authenticated users can only view and mutate their own records.
-- **Supabase Authentication**:
-  - Email & password registration with email verification.
-  - Google OAuth login via Supabase GoTrue.
-  - Forgot password & password reset flows.
-  - Session management using secure HTTP-only cookies and Bearer tokens.
-  - Cascading account deletion (permanently removes user records and auth identity).
-- **Dual-Mode Repository Architecture**: Automatically uses Supabase PostgreSQL when credentials are configured, with automatic SQLite fallback for local development and offline unit testing.
+Integrates multiple music providers through a unified abstraction layer.
 
-### 5. Privacy Compliance & Consent Management
-- **India DPDP Act, 2023 & DPDP Rules, 2025**:
-  - Itemized, unbundled, affirmative consent (Terms, Privacy, Camera Processing, Emotion History).
-  - Explicit camera consent required before webcam processing can begin.
-  - Opt-in emotion history: emotional states are only stored if the user affirmatively opts in.
-  - Full grievance redressal disclosures and response timelines.
-  - Section 9 child protection safeguards (no behavioral monitoring or targeted advertising of minors).
-- **US State Privacy Laws (CCPA/CPRA, VCDPA, CPA)**:
-  - Notice at collection and explicit confirmation that personal data is never sold or shared.
-  - Right to Access / Data Portability (1-click JSON data export).
-  - Right to Erasure / Deletion (clear emotion history, clear listening history, delete account).
-- **Immutable Consent Audit Ledger**: Consecutive consent actions (grants, modifications, withdrawals) append new records to an immutable ledger and never overwrite historical data.
-- **Privacy Dashboard (`/dashboard/privacy`)**: Real-time consent toggles, immutable audit trail, personal data JSON export, selective data clearing, and account deletion.
-- **User Dashboard (`/dashboard`)**: Profile management, music preferences, listening history, favorite tracks, and opt-in emotion timeline.
+**Jamendo API**
+- Music catalog search.
+- Creative Commons music discovery.
+- Audio stream integration.
+- Licensing and attribution metadata.
+
+**Audius API**
+- Decentralized music catalog search.
+- Trending tracks.
+- Stream endpoint resolution.
+- Streamability and access-condition checks.
+- License metadata tracking.
+
+**Mubert API (Optional)**
+- AI-generated music channels.
+- Time-limited streaming links.
+- Commercial licensing verification for supported plans.
+
+### 3. Unified Music Metadata Architecture
+
+Normalizes provider-specific music information into a common track schema.
+
+Supported metadata includes:
+
+- Track ID
+- Title and artist
+- Album
+- Genre
+- Duration
+- BPM
+- Energy
+- Mood tags
+- Artwork
+- Playback URL
+- Provider information
+- Licensing and attribution metadata
+
+### 4. Copyright and Licensing Validation
+
+A dedicated licensing engine evaluates track eligibility before playback.
+
+Features include:
+
+- Commercial and non-commercial deployment policies.
+- Creative Commons license verification.
+- Blocking of Non-Commercial (CC-NC) tracks in commercial mode.
+- Audius streamability and access-condition enforcement.
+- Jamendo licensing verification.
+- Attribution generation for applicable Creative Commons tracks.
+- No bypassing of provider restrictions or unauthorized audio proxying.
+
+### 5. Supabase Authentication and PostgreSQL
+
+Uses Supabase for cloud authentication and persistent PostgreSQL storage.
+
+**Authentication**
+- Email and password registration.
+- Email verification.
+- Google OAuth.
+- Password recovery and reset.
+- Session management.
+- Account deletion.
+
+**Database**
+- User profiles.
+- Music preferences.
+- Consent records.
+- Emotion history (optional).
+- Listening history.
+- Favorite tracks.
+- Policy versions.
+- Privacy requests.
+- Security audit logs.
+
+**Security**
+- PostgreSQL Row Level Security (RLS).
+- User-specific data access policies.
+- Service-role operations restricted to trusted backend code.
+- Foreign-key relationships and cascading deletion where configured.
+
+### 6. Privacy and Consent Management
+
+Privacy-focused architecture with explicit consent management.
+
+**India DPDP Act**
+- Itemized consent collection.
+- Explicit camera-processing consent.
+- Optional emotion-history storage.
+- Consent withdrawal.
+- Grievance redressal information.
+- Child protection safeguards.
+
+**International Privacy Considerations**
+- GDPR.
+- CCPA/CPRA.
+- Illinois BIPA.
+- Texas CUBI.
+- Washington biometric privacy requirements.
+
+**Privacy Features**
+- Data export in JSON format.
+- Selective deletion of user data.
+- Account deletion.
+- Consent history.
+- Camera-processing controls.
+- No persistent storage of raw webcam images or facial templates by design.
+
+The implementation is designed to support privacy-conscious development. It does not independently establish legal compliance.
+
+### 7. User Dashboard
+
+Provides a centralized dashboard for:
+
+- Profile management.
+- Music preferences.
+- Listening history.
+- Favorite tracks.
+- Emotion timeline (opt-in).
+- Privacy settings.
+- Consent management.
+- Personal data export and deletion.
 
 ---
 
-## 📐 System Architecture
+## 🏗️ System Architecture
 
 ```text
-[ Client Browser / Webcam ]
-           │
-           ▼
-[ Flask Application (app.py) ]
-  ├── Auth Blueprint: /auth/* (Register, Login, Google OAuth, Reset, Delete)
-  ├── Privacy Blueprint: /privacy/* (Policy, Terms, Consent, Export, Erasure)
-  ├── Dashboard Blueprint: /dashboard/* (User Dashboard & Privacy Controls)
-  ├── Music API: /api/music/* (Search, Track, Playback, Recommendations, Favorites)
-  ├── In-Memory Emotion Pipeline: DeepFace (0-second disk retention; no face templates)
-  └── Services:
-        ├── ProviderRegistry (Jamendo, Audius, Mubert)
-        ├── LicensingValidator (Non-Commercial vs. Commercial Policy)
-        ├── EmotionRecommendationEngine (Mood Matching & Mood Shifting)
-        ├── SupabaseConnectionManager (Anon client with RLS + Admin client with Service Role)
-        └── SupabaseRepository / LocalFallbackRepository (Dual-mode PostgreSQL/SQLite)
+             Client Browser
+          (Webcam + Music Player)
+                    |
+                    v
+             Flask Application
+                  app.py
+                    |
+       +------------+-------------+
+       |            |             |
+       v            v             v
+    Authentication Privacy     Dashboard
+       Module      Module       Module
+       |            |             |
+       +------------+-------------+
+                    |
+                    v
+              Core Services
+                    |
+       +------------+-------------+
+       |            |             |
+       v            v             v
+   Emotion      Music Provider  Licensing
+   Detection      Registry      Validator
+       |            |             |
+       v            v             v
+    DeepFace    Jamendo        License Rules
+    OpenCV      Audius
+                Mubert
+                    |
+                    v
+             Data Repository
+                    |
+          +---------+---------+
+          |                   |
+          v                   v
+       Supabase             SQLite
+      PostgreSQL        Local Fallback
 ```
+
+### Technology Stack
+
+| Component | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Frontend | HTML, CSS, JavaScript |
+| Emotion Recognition | DeepFace |
+| Computer Vision | OpenCV |
+| Numerical Processing | NumPy |
+| Data Processing | Pandas |
+| Database | PostgreSQL |
+| Authentication | Supabase Auth |
+| Database Security | PostgreSQL RLS |
+| Local Fallback | SQLite |
+| Music Providers | Jamendo, Audius, Mubert |
+| API Communication | Requests |
+| Deployment | Docker, Gunicorn |
+| Testing | Pytest |
 
 ---
 
-## 🗄️ Database Schema & Migrations
+## 🗄️ Database Schema and Migrations
 
-Database migrations are located in `database/migrations/`:
+Database migrations are available in:
 
-| Migration File | Description |
-| :--- | :--- |
-| `001_initial_schema.sql` | Creates tables: `profiles`, `user_preferences`, `consent_records`, `emotion_history`, `listening_history`, `favorite_tracks`, `policy_versions`, `privacy_requests`, `security_audit_logs`, with primary keys, indexes, and foreign keys with `ON DELETE CASCADE`. |
-| `002_rls_policies.sql` | Enables Row Level Security (RLS) on all tables; configures policies checking `auth.uid() = user_id`; restricts `security_audit_logs` to service role. |
-| `003_seed_policies.sql` | Seeds initial legal policy versions (`privacy_policy`, `terms_and_conditions`, `camera_consent`). |
+```text
+database/
+└── migrations/
+    ├── 001_initial_schema.sql
+    ├── 002_rls_policies.sql
+    └── 003_seed_policies.sql
+```
 
-### Running Migrations on Supabase:
-1. Log in to your [Supabase Dashboard](https://supabase.com).
-2. Navigate to **SQL Editor** in your project.
-3. Paste and execute `001_initial_schema.sql`, `002_rls_policies.sql`, and `003_seed_policies.sql` in sequence.
+| Migration | Description |
+|---|---|
+| `001_initial_schema.sql` | Creates database tables, relationships, indexes, and constraints. |
+| `002_rls_policies.sql` | Enables Row Level Security and configures access policies. |
+| `003_seed_policies.sql` | Inserts initial privacy, terms, and camera-consent policy versions. |
+
+### Database Tables
+
+- `profiles`
+- `user_preferences`
+- `consent_records`
+- `emotion_history`
+- `listening_history`
+- `favorite_tracks`
+- `policy_versions`
+- `privacy_requests`
+- `security_audit_logs`
+
+### Running Database Migrations
+
+1. Create a project at [Supabase](https://supabase.com).
+2. Open the Supabase Dashboard.
+3. Navigate to SQL Editor.
+4. Execute the migration files in the following order:
+   - `001_initial_schema.sql`
+   - `002_rls_policies.sql`
+   - `003_seed_policies.sql`
+
+Execute each migration successfully before proceeding to the next.
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- Python 3.10+ (tested on Python 3.11, 3.12, 3.13)
-- Modern web browser with webcam support
-- (Optional) Free Supabase project for cloud PostgreSQL & Auth
+### Prerequisites
 
-### 2. Environment Setup
+- Python 3.11.
+- Git.
+- Modern web browser.
+- Webcam for emotion recognition.
+- Docker (optional).
+- Supabase project (optional for local SQLite fallback).
+- API credentials for enabled music providers.
+
+### 1. Clone the Repository
+
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/Music-reccomandation-system.git
-cd Music-reccomandation-system
-
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy environment template
-cp .env.example .env
+git clone <REPOSITORY_URL>
+cd <PROJECT_DIRECTORY>
 ```
 
-### 3. Configuration (`.env`)
-Configure credentials in your `.env` file:
+### 2. Create a Virtual Environment
+
+```bash
+python3 -m venv .venv
+```
+
+Activate it:
+
+**macOS / Linux**
+
+```bash
+source .venv/bin/activate
+```
+
+**Windows**
+
+```bash
+.venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env` file using `.env.example` as a template.
+
 ```ini
-# Flask & App Security
-FLASK_SECRET_KEY=generate-a-secure-random-secret
+# Application Configuration
+FLASK_SECRET_KEY=your-secure-random-secret
 APP_BASE_URL=http://localhost:8080
 
-# Supabase PostgreSQL & Authentication (Optional for cloud, SQLite fallback used if blank)
+# Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_ANON_KEY=your-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-secret-key
 
-# Jamendo API (https://developer.jamendo.com)
+# Jamendo Configuration
 JAMENDO_ENABLED=true
-JAMENDO_CLIENT_ID=your_jamendo_client_id
+JAMENDO_CLIENT_ID=your-jamendo-client-id
 
-# Audius API (https://docs.audius.co/api)
+# Audius Configuration
 AUDIUS_ENABLED=true
 AUDIUS_API_KEY=
 
-# Mubert API (Optional generative audio B2B plan)
+# Mubert Configuration (Optional)
 MUBERT_ENABLED=false
 MUBERT_COMPANY_ID=
 MUBERT_LICENSE_TOKEN=
 ```
 
-### 4. Run the Application
+**Security Notes:**
+
+- Never commit `.env` files to GitHub.
+- Never expose the Supabase secret key in frontend code.
+- Keep privileged database operations on the backend.
+- Configure Row Level Security before exposing user data.
+- Use HTTPS for production deployments.
+- Configure OAuth redirect URLs in Supabase.
+
+### 5. Run the Application
+
 ```bash
 python app.py
 ```
-Open your browser at: **`http://localhost:8080`**
 
-### 5. Run with Docker
-```bash
-docker build -t emotion-music-app .
-docker run -p 8080:8080 --env-file .env emotion-music-app
+Open:
+
+```text
+http://localhost:8080
 ```
 
 ---
 
-## 🧪 Automated Test Suite
+## 🐳 Docker Deployment
 
-A comprehensive test suite of **55 unit and integration tests** validates:
-- Music provider integrations (Jamendo, Audius, Mubert).
-- Unified track normalization and licensing validation.
-- Mood matching & mood shifting recommendation algorithms.
-- Supabase PostgreSQL schema, CRUD, cascade deletions, and data export.
-- Immutable consent audit ledger recording and withdrawal.
-- Strictly in-memory camera frame processing (verifying 0 disk writes).
-- Mandatory camera consent gating for `/analyze` and `/auto-capture`.
-- User authentication, registration with unbundled consents, and protected routes.
+### Build the Docker Image
 
 ```bash
-# Run the entire test suite with pytest
+docker build -t emotion-music-app .
+```
+
+### Run the Container
+
+```bash
+docker run -p 8080:8080 --env-file .env emotion-music-app
+```
+
+The application will be available at:
+
+```text
+http://localhost:8080
+```
+
+### Deployment Considerations
+
+- Configure production environment variables through your hosting provider.
+- Do not include secrets in the Docker image.
+- Use a production WSGI server such as Gunicorn.
+- Configure the application health-check endpoint.
+- Select hosting resources appropriate for OpenCV and DeepFace workloads.
+
+---
+
+## 🧪 Automated Testing
+
+The project includes a test suite covering core functionality.
+
+Run tests:
+
+```bash
 pytest tests/ -v
 ```
+
+Test coverage includes:
+
+- Music provider integrations.
+- Unified track metadata normalization.
+- Licensing validation.
+- Emotion-based recommendation algorithms.
+- Mood matching and mood shifting.
+- Supabase repository operations.
+- SQLite fallback functionality.
+- Database CRUD operations.
+- Account deletion and cascading operations.
+- Consent history and withdrawal.
+- Data export and deletion.
+- In-memory image-processing behavior.
+- Camera consent enforcement.
+- Authentication and protected routes.
+
+---
+
+## 🔐 Security and Privacy
+
+The application follows a privacy-conscious design approach:
+
+- Explicit camera consent.
+- In-memory webcam frame processing.
+- No intended persistent storage of raw webcam images.
+- No persistent facial embedding storage.
+- Optional emotion-history collection.
+- User-specific database access through RLS.
+- Backend-only privileged Supabase credentials.
+- Consent withdrawal and data deletion mechanisms.
+
+Actual privacy and security guarantees depend on implementation details, infrastructure configuration, third-party services, and deployment practices.
 
 ---
 
 ## ⚖️ Legal Disclaimer
-This software implements technical architecture and controls designed to assist with compliance under the India Digital Personal Data Protection Act, 2023 & DPDP Rules, 2025, US State Privacy Laws (CCPA/CPRA), Illinois BIPA, and GDPR. However, software implementation alone does not constitute formal legal compliance. Organizations deploying this application commercially must conduct an independent legal review with qualified counsel.
+
+This project is intended for educational, research, and demonstration purposes.
+
+It includes technical controls designed to support privacy and licensing considerations under applicable laws and regulations, including:
+
+- India Digital Personal Data Protection Act, 2023.
+- GDPR.
+- CCPA/CPRA.
+- Illinois BIPA.
+- Texas CUBI.
+- Applicable Creative Commons licensing requirements.
+
+This software does not guarantee legal compliance. Organizations deploying it commercially should obtain independent legal advice and verify all applicable provider agreements, licensing permissions, and privacy obligations.
+
+Music availability and playback rights are determined by the respective providers and rights holders.
+
+---
+
+## 🤝 Contributing
+
+Contributions, bug reports, feature requests, and improvements are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement your changes.
+4. Run the automated test suite.
+5. Submit a pull request with a clear description.
+
+Please ensure that contributions respect music-provider terms, copyright restrictions, and privacy requirements.
 
 ---
 
 ## 📄 License
-This application is distributed for educational and demonstration purposes. All audio streaming complies with upstream provider developer terms and individual artist licenses.
+
+Add the applicable open-source license to the repository before distributing the project.
+
+Third-party APIs, music catalogs, audio streams, and artwork remain subject to their respective provider terms and rights-holder licenses.
+
+---
+
+**Built with Python, AI, computer vision, and privacy-conscious music technology.**
